@@ -11,7 +11,7 @@ interface DoubanMovie {
 
 const PAGE_LIMIT = 20;
 
-export function usePopularMovies(selectedTag: string, tags: any[]) {
+export function usePopularMovies(selectedTag: string, tags: any[], contentType: 'movie' | 'tv' = 'movie') {
     const [movies, setMovies] = useState<DoubanMovie[]>([]);
     const [loading, setLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
@@ -24,7 +24,7 @@ export function usePopularMovies(selectedTag: string, tags: any[]) {
         try {
             const tagValue = tags.find(t => t.id === tag)?.value || '热门';
             const response = await fetch(
-                `/api/douban/recommend?tag=${encodeURIComponent(tagValue)}&page_limit=${PAGE_LIMIT}&page_start=${pageStart}`
+                `/api/douban/recommend?type=${contentType}&tag=${encodeURIComponent(tagValue)}&page_limit=${PAGE_LIMIT}&page_start=${pageStart}`
             );
 
             if (!response.ok) throw new Error('Failed to fetch');
@@ -40,14 +40,14 @@ export function usePopularMovies(selectedTag: string, tags: any[]) {
         } finally {
             setLoading(false);
         }
-    }, [loading, tags]);
+    }, [loading, tags, contentType]);
 
     useEffect(() => {
         setPage(0);
         setMovies([]);
         setHasMore(true);
         loadMovies(selectedTag, 0, false);
-    }, [selectedTag]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [selectedTag, contentType]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const { prefetchRef, loadMoreRef } = useInfiniteScroll({
         hasMore,

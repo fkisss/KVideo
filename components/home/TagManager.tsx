@@ -18,6 +18,7 @@ interface TagManagerProps {
   onAddTag: () => void;
   onDragEnd: (event: DragEndEvent) => void;
   onJustAddedTagHandled: () => void;
+  isLoadingTags?: boolean;
 }
 
 export function TagManager({
@@ -34,6 +35,7 @@ export function TagManager({
   onAddTag,
   onDragEnd,
   onJustAddedTagHandled,
+  isLoadingTags,
 }: TagManagerProps) {
   return (
     <>
@@ -67,16 +69,23 @@ export function TagManager({
       )}
 
       {/* Tag Filter */}
-      <TagList
-        tags={tags}
-        selectedTag={selectedTag}
-        showTagManager={showTagManager}
-        justAddedTag={justAddedTag}
-        onTagSelect={onTagSelect}
-        onTagDelete={onTagDelete}
-        onDragEnd={onDragEnd}
-        onJustAddedTagHandled={onJustAddedTagHandled}
-      />
+      {isLoadingTags ? (
+        <div className="flex items-center gap-2 py-4">
+          <Icons.RefreshCw size={16} className="animate-spin text-[var(--accent-color)]" />
+          <span className="text-sm text-[var(--text-color-secondary)]">正在加载标签...</span>
+        </div>
+      ) : (
+        <TagList
+          tags={tags}
+          selectedTag={selectedTag}
+          showTagManager={showTagManager}
+          justAddedTag={justAddedTag}
+          onTagSelect={onTagSelect}
+          onTagDelete={onTagDelete}
+          onDragEnd={onDragEnd}
+          onJustAddedTagHandled={onJustAddedTagHandled}
+        />
+      )}
     </>
   );
 }

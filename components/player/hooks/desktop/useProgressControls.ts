@@ -23,6 +23,7 @@ export function useProgressControls({
         const pos = (e.clientX - rect.left) / rect.width;
         const newTime = pos * duration;
         videoRef.current.currentTime = newTime;
+        lastDragTimeRef.current = newTime; // Update ref to prevent snap-back on mouseup
         setCurrentTime(newTime);
     }, [videoRef, progressBarRef, duration, setCurrentTime]);
 

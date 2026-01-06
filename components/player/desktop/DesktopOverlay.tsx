@@ -6,6 +6,7 @@ import { DesktopSpeedMenu } from './DesktopSpeedMenu';
 
 interface DesktopOverlayProps {
     isLoading: boolean;
+    isTransitioningToNextEpisode?: boolean;
     isPlaying: boolean;
     showSkipForwardIndicator: boolean;
     showSkipBackwardIndicator: boolean;
@@ -38,6 +39,7 @@ interface DesktopOverlayProps {
 
 export function DesktopOverlay({
     isLoading,
+    isTransitioningToNextEpisode = false,
     isPlaying,
     showSkipForwardIndicator,
     showSkipBackwardIndicator,
@@ -101,7 +103,14 @@ export function DesktopOverlay({
             {/* Loading Spinner - Glass Effect */}
             {isLoading && (
                 <div className="loading-overlay-glass">
-                    <div className="spinner-glass"></div>
+                    {isTransitioningToNextEpisode ? (
+                        <div className="next-episode-loading">
+                            <div className="spinner-glass"></div>
+                            <span className="next-episode-text">正在自动播放下一集...</span>
+                        </div>
+                    ) : (
+                        <div className="spinner-glass"></div>
+                    )}
                 </div>
             )}
 
@@ -110,7 +119,7 @@ export function DesktopOverlay({
                 <div className="absolute top-1/2 left-24 -translate-y-1/2 pointer-events-none transition-all duration-300 z-20">
                     <div className={`text-white text-3xl font-bold drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] ${isSkipBackwardAnimatingOut ? 'animate-scale-out' : 'animate-scale-in'
                         }`}>
-                        -{skipBackwardAmount}s
+                        -{skipBackwardAmount}秒
                     </div>
                 </div>
             )}
@@ -120,7 +129,7 @@ export function DesktopOverlay({
                 <div className="absolute top-1/2 right-24 -translate-y-1/2 pointer-events-none transition-all duration-300 z-20">
                     <div className={`text-white text-3xl font-bold drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] ${isSkipForwardAnimatingOut ? 'animate-scale-out' : 'animate-scale-in'
                         }`}>
-                        +{skipForwardAmount}s
+                        +{skipForwardAmount}秒
                     </div>
                 </div>
             )}
@@ -137,7 +146,7 @@ export function DesktopOverlay({
                         onSkipBackward();
                     }}
                     className="group flex items-center justify-center w-10 h-10 md:w-16 md:h-16 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-all duration-300 hover:scale-110 active:scale-95"
-                    aria-label="Skip Backward 10s"
+                    aria-label="后退 10 秒"
                 >
                     <Icons.SkipBack className="w-5 h-5 md:w-8 md:h-8 text-white/80 group-hover:text-white" />
                 </button>
@@ -155,7 +164,7 @@ export function DesktopOverlay({
                         onSkipForward();
                     }}
                     className="group flex items-center justify-center w-10 h-10 md:w-16 md:h-16 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-all duration-300 hover:scale-110 active:scale-95"
-                    aria-label="Skip Forward 10s"
+                    aria-label="前进 10 秒"
                 >
                     <Icons.FastForward className="w-5 h-5 md:w-8 md:h-8 text-white/80 group-hover:text-white" />
                 </button>
@@ -167,7 +176,7 @@ export function DesktopOverlay({
                     <button
                         onClick={onTogglePlay}
                         className="pointer-events-auto w-12 h-12 md:w-20 md:h-20 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer"
-                        aria-label="Play"
+                        aria-label="播放"
                     >
                         <Icons.Play className="w-6 h-6 md:w-10 md:h-10 text-white ml-1" />
                     </button>

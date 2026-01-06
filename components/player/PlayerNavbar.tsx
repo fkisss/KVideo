@@ -4,8 +4,9 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import { Icons } from '@/components/ui/Icon';
+import { siteConfig } from '@/lib/config/site-config';
 
-export function PlayerNavbar() {
+export function PlayerNavbar({ isPremium }: { isPremium?: boolean }) {
     const router = useRouter();
 
     return (
@@ -14,13 +15,13 @@ export function PlayerNavbar() {
                 <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                         <button
-                            onClick={() => router.push('/')}
+                            onClick={() => router.push(isPremium ? '/premium' : '/')}
                             className="flex items-center justify-center hover:opacity-80 transition-opacity flex-shrink-0 cursor-pointer"
-                            title="返回首页"
+                            title={isPremium ? "返回高级主页" : "返回首页"}
                         >
                             <Image
                                 src="/icon.png"
-                                alt="KVideo"
+                                alt={siteConfig.name}
                                 width={40}
                                 height={40}
                                 className="object-contain"

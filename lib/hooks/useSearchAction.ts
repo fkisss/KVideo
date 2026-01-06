@@ -39,8 +39,8 @@ export function useSearchAction({ state, onCacheUpdate, onUrlUpdate }: UseSearch
             targetSources = [
                 ...settings.sources,
                 ...settings.subscriptions.filter(s => (s as any).enabled !== false), // Include valid subscriptions
-                // Maybe check adult settings? For main search, we usually include all enabled.
-                // But typically search implies general search. Adult might be separate?
+                // Maybe check premium settings? For main search, we usually include all enabled.
+                // But typically search implies general search. Premium might be separate?
                 // The prompt for "search" includes all.
             ].filter(s => (s as any).enabled !== false);
         }
@@ -123,7 +123,9 @@ export function useSearchAction({ state, onCacheUpdate, onUrlUpdate }: UseSearch
 
         } catch (error) {
             if (error instanceof Error && error.name === 'AbortError') {
-                // Ignore abort errors
+                // Ignore abort errors and DO NOT set loading to false
+                // because a new search might have already started
+                return;
             } else {
                 console.error('Search error:', error);
             }

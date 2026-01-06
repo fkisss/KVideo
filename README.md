@@ -1,4 +1,4 @@
-# KVideo
+# 视频聚合平台 (KVideo)
 
 ![KVideo Banner](public/icon.png)
 
@@ -46,6 +46,7 @@
 
 ### 🎬 豆瓣集成
 
+- **电影 & 电视剧分类**：支持在电影和电视剧之间无缝切换，方便查找不同类型的影视资源
 - **详细影视信息**：自动获取豆瓣评分、演员阵容、剧情简介等详细信息
 - **推荐系统**：基于豆瓣数据的相关推荐
 - **专业评价**：展示豆瓣用户评价和专业影评
@@ -76,6 +77,13 @@
 - **语义化 HTML**：使用语义化标签提升可访问性
 - **高对比度**：确保 4.5:1 的文字对比度
 
+### 💎 高级模式
+
+- **独立入口**：在浏览器地址栏直接输入 `/premium` 即可进入独立的高级视频专区
+- **内容隔离**：高级内容与普通内容完全物理隔离，互不干扰
+- **专属设置**：拥有独立的内容源管理和功能设置
+
+
 ## 🔐 隐私保护
 
 本应用注重用户隐私：
@@ -103,7 +111,7 @@ KVideo 支持两种密码保护方式：
 **Docker 部署：**
 
 ```bash
-docker run -d -p 3000:3000 -e ACCESS_PASSWORD=your_secret_password --name kvideo kuekhaoyang/kvideo:latest
+docker run -d -p 3000:3000 -e ACCESS_PASSWORD=your_premium_password --name kvideo kuekhaoyang/kvideo:latest
 ```
 
 **Vercel 部署：**
@@ -117,7 +125,49 @@ docker run -d -p 3000:3000 -e ACCESS_PASSWORD=your_secret_password --name kvideo
 - **无法在界面删除**：只能通过修改环境变量更改
 - **与本地密码兼容**：两种密码都可以解锁应用
 
-## � 自动订阅源配置
+## 🎨 站点名称自定义配置
+
+通过环境变量可以自定义站点名称、标题和描述，无需修改源代码。
+
+### 可用环境变量：
+
+| 变量名 | 说明 | 默认值 |
+|--------|------|--------|
+| `NEXT_PUBLIC_SITE_TITLE` | 浏览器标签页标题 | `视频聚合平台 - KVideo` |
+| `NEXT_PUBLIC_SITE_DESCRIPTION` | 站点描述 | `专属视频聚合播放平台，具备美观的 Liquid Glass UI` |
+| `NEXT_PUBLIC_SITE_NAME` | 站点头部名称 | `视频聚合平台` |
+
+### 配置示例：
+
+**Vercel 部署：**
+在 Vercel 项目设置中添加环境变量：
+
+- 变量名：`NEXT_PUBLIC_SITE_NAME`
+- 变量值：`我的视频平台`
+
+**Cloudflare Pages 部署：**
+在 Cloudflare Pages 项目设置中添加环境变量：
+- 变量名：`NEXT_PUBLIC_SITE_NAME`
+- 变量值：`我的视频平台`
+
+**Docker 部署：**
+```bash
+docker run -d -p 3000:3000 \
+  -e NEXT_PUBLIC_SITE_NAME="我的视频平台" \
+  -e NEXT_PUBLIC_SITE_TITLE="我的视频 - 聚合播放平台" \
+  -e NEXT_PUBLIC_SITE_DESCRIPTION="专属视频聚合播放平台" \
+  --name kvideo kuekhaoyang/kvideo:latest
+```
+
+**本地开发：**
+在项目根目录创建 `.env.local` 文件：
+```env
+NEXT_PUBLIC_SITE_NAME=我的视频平台
+NEXT_PUBLIC_SITE_TITLE=我的视频 - 聚合播放平台
+NEXT_PUBLIC_SITE_DESCRIPTION=专属视频聚合播放平台
+```
+
+## 📦 自动订阅源配置
 
 可以通过环境变量 `NEXT_PUBLIC_SUBSCRIPTION_SOURCES` 自动配置订阅源，应用启动时会自动加载并设置为自动更新。
 
@@ -141,6 +191,12 @@ docker run -d -p 3000:3000 -e NEXT_PUBLIC_SUBSCRIPTION_SOURCES='[{"name":"MySour
 - 变量名：`NEXT_PUBLIC_SUBSCRIPTION_SOURCES`
 - 变量值：`[{"name":"...","url":"..."}]`
 
+**Cloudflare Pages 部署：**
+
+在 Cloudflare Pages 项目设置中添加环境变量：
+- 变量名：`NEXT_PUBLIC_SUBSCRIPTION_SOURCES`
+- 变量值：`[{"name":"...","url":"..."}]`
+
 ## 📝 自定义源 JSON 格式
 
 如果你想创建自己的订阅源或批量导入源，可以使用以下 JSON 格式。
@@ -156,7 +212,7 @@ docker run -d -p 3000:3000 -e NEXT_PUBLIC_SUBSCRIPTION_SOURCES='[{"name":"MySour
 | `id` | string | 是 | 唯一标识符，建议使用英文 |
 | `name` | string | 是 | 显示名称 |
 | `baseUrl` | string | 是 | API 地址 (例如: `https://example.com/api.php/provide/vod`) |
-| `group` | string | 否 | 分组，可选值: `"normal"` (默认) 或 `"adult"` |
+| `group` | string | 否 | 分组，可选值: `"normal"` (默认) 或 `"premium"` |
 | `enabled` | boolean | 否 | 是否启用，默认为 `true` |
 | `priority` | number | 否 | 优先级，数字越小优先级越高，默认为 1 |
 
@@ -172,14 +228,33 @@ docker run -d -p 3000:3000 -e NEXT_PUBLIC_SUBSCRIPTION_SOURCES='[{"name":"MySour
     "priority": 1
   },
   {
-    "id": "adult_source_1",
+    "id": "premium_source_1",
     "name": "特殊资源",
-    "baseUrl": "https://api.adult-source.com/vod",
-    "group": "adult",
+    "baseUrl": "https://api.premium-source.com/vod",
+    "group": "premium",
     "enabled": true
   }
 ]
 ```
+
+### ⚠️ 重要的区别说明：订阅源 vs 视频源
+
+**这是一个常见的误区，请仔细阅读：**
+
+- **视频源 (Source)**：
+  - 指向单个 CMS/App API 接口
+  - 例如：`https://api.example.com/vod`
+  - 这种链接**不能**直接作为"订阅"添加
+  - 只能在"自定义源管理"中作为单个源添加
+
+- **订阅源 (Subscription)**：
+  - 指向一个 **JSON 文件**（如上面的示例）的 URL
+  - 这个 JSON 文件里包含了一个或多个视频源的列表
+  - 例如：`https://mysite.com/kvideo-sources.json`
+  - 这是一个**配置文件**的链接，不是视频 API 的链接
+  - 只有这种返回 JSON 列表的链接才能在"订阅管理"中添加
+
+> **简单来说**：如果你只有一个 m3u8 或 API 接口地址，请去"自定义源"添加。如果你有一个包含多个源的 JSON 文件链接，请去"订阅管理"添加。
 
 ## 🛠 技术栈
 

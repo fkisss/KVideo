@@ -47,7 +47,7 @@ export function SourceManager({
               <button
                 onClick={() => handleToggle(source.id)}
                 className="relative inline-block w-12 h-7 flex-shrink-0 cursor-pointer"
-                aria-label={`Toggle ${source.name}`}
+                aria-label={`切换 ${source.name} 状态`}
               >
                 <span
                   className={`absolute inset-0 rounded-[var(--radius-full)] transition-all duration-[0.4s] cubic-bezier(0.2,0.8,0.2,1) ${source.enabled
@@ -79,7 +79,7 @@ export function SourceManager({
                 onClick={() => handlePriorityChange(source.id, 'up')}
                 disabled={index === 0}
                 className="w-8 h-8 flex items-center justify-center rounded-[var(--radius-full)] bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--text-color)] hover:bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer"
-                aria-label="Move up"
+                aria-label="上移"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M12 19V5M5 12l7-7 7 7" />
@@ -90,7 +90,7 @@ export function SourceManager({
                 onClick={() => handlePriorityChange(source.id, 'down')}
                 disabled={index === sources.length - 1}
                 className="w-8 h-8 flex items-center justify-center rounded-[var(--radius-full)] bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--text-color)] hover:bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer"
-                aria-label="Move down"
+                aria-label="下移"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M12 5v14M19 12l-7 7-7-7" />
@@ -102,7 +102,7 @@ export function SourceManager({
                 <button
                   onClick={() => onEdit(source)}
                   className="w-8 h-8 flex items-center justify-center rounded-[var(--radius-full)] bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--text-color)] hover:bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] transition-all duration-200 cursor-pointer"
-                  aria-label="Edit source"
+                  aria-label="编辑视频源"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -115,7 +115,7 @@ export function SourceManager({
               <button
                 onClick={() => handleDelete(source.id)}
                 className="w-8 h-8 flex items-center justify-center rounded-[var(--radius-full)] bg-[var(--glass-bg)] border border-[var(--glass-border)] text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 cursor-pointer"
-                aria-label="Delete source"
+                aria-label="删除视频源"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />

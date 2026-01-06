@@ -27,7 +27,13 @@ export function useDesktopPlayerState() {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [showControls, setShowControls] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
-    const [playbackRate, setPlaybackRate] = useState(1);
+    const [playbackRate, setPlaybackRate] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('kvideo-playback-rate');
+            return saved ? parseFloat(saved) : 1;
+        }
+        return 1;
+    });
     const [showSpeedMenu, setShowSpeedMenu] = useState(false);
     const [isPiPSupported, setIsPiPSupported] = useState(false);
     const [isAirPlaySupported, setIsAirPlaySupported] = useState(false);

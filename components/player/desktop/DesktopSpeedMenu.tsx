@@ -85,7 +85,7 @@ export function DesktopSpeedMenu({
                 onMouseEnter={onMouseEnter}
                 onMouseLeave={onMouseLeave}
                 className="group flex items-center justify-center w-12 h-12 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-all duration-300 hover:scale-110 active:scale-95 text-white/90 font-medium text-sm"
-                aria-label="Playback speed"
+                aria-label="播放速度"
             >
                 {playbackRate}x
             </button>

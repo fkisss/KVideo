@@ -2,50 +2,72 @@ import { useState, useEffect } from 'react';
 import { DragEndEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 
-const DEFAULT_TAGS = [
-    { id: 'popular', label: '热门', value: '热门' },
-    { id: 'latest', label: '最新', value: '最新' },
-    { id: 'classic', label: '经典', value: '经典' },
-    { id: 'highscore', label: '豆瓣高分', value: '豆瓣高分' },
-    { id: 'underrated', label: '冷门佳片', value: '冷门佳片' },
-    { id: 'chinese', label: '华语', value: '华语' },
-    { id: 'western', label: '欧美', value: '欧美' },
-    { id: 'korean', label: '韩国', value: '韩国' },
-    { id: 'japanese', label: '日本', value: '日本' },
-    { id: 'action', label: '动作', value: '动作' },
-    { id: 'comedy', label: '喜剧', value: '喜剧' },
-    { id: 'variety', label: '综艺', value: '综艺' },
-    { id: 'romance', label: '爱情', value: '爱情' },
-    { id: 'scifi', label: '科幻', value: '科幻' },
-    { id: 'thriller', label: '悬疑', value: '悬疑' },
-    { id: 'horror', label: '恐怖', value: '恐怖' },
-    { id: 'healing', label: '治愈', value: '治愈' },
-];
+const DEFAULT_TAG = { id: 'popular', label: '热门', value: '热门' };
 
-const STORAGE_KEY = 'kvideo_custom_tags';
+const STORAGE_KEY_PREFIX = 'kvideo_custom_tags_';
 
 export function useTagManager() {
-    const [selectedTag, setSelectedTag] = useState('popular');
-    const [tags, setTags] = useState(DEFAULT_TAGS);
+    const [contentType, setContentType] = useState<'movie' | 'tv'>('movie');
+    const [selectedTag, setSelectedTag] = useState(DEFAULT_TAG.value);
+    const [tags, setTags] = useState<any[]>([]);
+    const [isLoadingTags, setIsLoadingTags] = useState(false);
     const [newTagInput, setNewTagInput] = useState('');
     const [showTagManager, setShowTagManager] = useState(false);
     const [justAddedTag, setJustAddedTag] = useState(false);
 
-    // Load custom tags from localStorage
-    useEffect(() => {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-            try {
-                setTags(JSON.parse(saved));
-            } catch (e) {
-                console.error('Failed to parse saved tags', e);
-            }
-        }
-    }, []);
+    const storageKey = `${STORAGE_KEY_PREFIX}${contentType}`;
 
-    const saveTags = (newTags: typeof DEFAULT_TAGS) => {
+    // Load custom tags or fetch from Douban
+    useEffect(() => {
+        const loadTags = async () => {
+            const saved = localStorage.getItem(storageKey);
+            if (saved) {
+                try {
+                    setTags(JSON.parse(saved));
+                    return;
+                } catch (e) {
+                    console.error('Failed to parse saved tags', e);
+                }
+            }
+
+            // If no saved tags, fetch from Douban
+            setIsLoadingTags(true);
+            try {
+                const response = await fetch(`/api/douban/tags?type=${contentType}`);
+                const data = await response.json();
+                if (data.tags && Array.isArray(data.tags)) {
+                    const mappedTags = data.tags.map((label: string) => ({
+                        id: label === '热门' ? 'popular' : `tag_${label}`,
+                        label,
+                        value: label,
+                    }));
+
+                    // If "热门" isn't in the list, add it to the front
+                    if (!mappedTags.some((t: any) => t.value === '热门')) {
+                        mappedTags.unshift(DEFAULT_TAG);
+                    }
+
+                    setTags(mappedTags);
+                    // Also save to localStorage to avoid repeated fetches if desired
+                    // Actually, let's just keep them in memory for now unless they customize
+                } else {
+                    setTags([DEFAULT_TAG]);
+                }
+            } catch (error) {
+                console.error('Fetch tags error:', error);
+                setTags([DEFAULT_TAG]);
+            } finally {
+                setIsLoadingTags(false);
+            }
+        };
+
+        loadTags();
+        setSelectedTag(DEFAULT_TAG.value);
+    }, [contentType, storageKey]);
+
+    const saveTags = (newTags: any[]) => {
         setTags(newTags);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(newTags));
+        localStorage.setItem(storageKey, JSON.stringify(newTags));
     };
 
     const handleAddTag = () => {
@@ -67,9 +89,32 @@ export function useTagManager() {
         }
     };
 
-    const handleRestoreDefaults = () => {
-        saveTags(DEFAULT_TAGS);
-        setSelectedTag('popular');
+    const handleRestoreDefaults = async () => {
+        localStorage.removeItem(storageKey);
+        // Refresh by re-fetching
+        setIsLoadingTags(true);
+        try {
+            const response = await fetch(`/api/douban/tags?type=${contentType}`);
+            const data = await response.json();
+            if (data.tags && Array.isArray(data.tags)) {
+                const mappedTags = data.tags.map((label: string) => ({
+                    id: label === '热门' ? 'popular' : `tag_${label}`,
+                    label,
+                    value: label,
+                }));
+                if (!mappedTags.some((t: any) => t.value === '热门')) {
+                    mappedTags.unshift(DEFAULT_TAG);
+                }
+                setTags(mappedTags);
+            } else {
+                setTags([DEFAULT_TAG]);
+            }
+        } catch (error) {
+            setTags([DEFAULT_TAG]);
+        } finally {
+            setIsLoadingTags(false);
+        }
+        setSelectedTag(DEFAULT_TAG.value);
         setShowTagManager(false);
     };
 
@@ -86,9 +131,12 @@ export function useTagManager() {
     return {
         tags,
         selectedTag,
+        contentType,
         newTagInput,
         showTagManager,
         justAddedTag,
+        isLoadingTags,
+        setContentType,
         setSelectedTag,
         setNewTagInput,
         setShowTagManager,

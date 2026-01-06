@@ -2,9 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { Tag } from '@/components/home/SortableTag';
 import { DragEndEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
-import { ADULT_STORAGE_KEY } from '@/lib/constants/adult-tags';
+import { PREMIUM_STORAGE_KEY } from '@/lib/constants/premium-tags';
 
-export function useAdultTagManager() {
+export function usePremiumTagManager() {
     const [tags, setTags] = useState<Tag[]>([]);
     const [selectedTag, setSelectedTag] = useState('recommend');
     const [showTagManager, setShowTagManager] = useState(false);
@@ -21,9 +21,9 @@ export function useAdultTagManager() {
                 // Dynamically import settingsStore to avoid initialization issues
                 const { settingsStore } = await import('@/lib/store/settings-store');
                 const settings = settingsStore.getSettings();
-                const enabledSources = settings.adultSources.filter(s => s.enabled);
+                const enabledSources = settings.premiumSources.filter(s => s.enabled);
 
-                const response = await fetch('/api/adult/types', {
+                const response = await fetch('/api/premium/types', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -37,7 +37,7 @@ export function useAdultTagManager() {
 
                 if (data.tags && Array.isArray(data.tags)) {
                     // Load saved order from local storage
-                    const savedTagsJson = localStorage.getItem(ADULT_STORAGE_KEY);
+                    const savedTagsJson = localStorage.getItem(PREMIUM_STORAGE_KEY);
                     if (savedTagsJson) {
                         try {
                             const savedTags = JSON.parse(savedTagsJson);
@@ -79,7 +79,7 @@ export function useAdultTagManager() {
                     }
                 }
             } catch (error) {
-                console.error('Failed to fetch adult tags:', error);
+                console.error('Failed to fetch premium tags:', error);
             } finally {
                 setLoading(false);
             }
@@ -91,7 +91,7 @@ export function useAdultTagManager() {
     // Save tags to local storage whenever they change
     useEffect(() => {
         if (tags.length > 0 && !loading) {
-            localStorage.setItem(ADULT_STORAGE_KEY, JSON.stringify(tags));
+            localStorage.setItem(PREMIUM_STORAGE_KEY, JSON.stringify(tags));
         }
     }, [tags, loading]);
 
@@ -114,9 +114,9 @@ export function useAdultTagManager() {
 
     const handleRestoreDefaults = async () => {
         setLoading(true);
-        localStorage.removeItem(ADULT_STORAGE_KEY);
+        localStorage.removeItem(PREMIUM_STORAGE_KEY);
         try {
-            const response = await fetch('/api/adult/types');
+            const response = await fetch('/api/premium/types');
             const data = await response.json();
             if (data.tags) {
                 setTags(data.tags);

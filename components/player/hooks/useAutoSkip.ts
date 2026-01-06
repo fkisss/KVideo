@@ -49,30 +49,61 @@ export function useAutoSkip({
     const hasTriggeredOutroSkipRef = useRef(false);
     // Track if we're currently in the outro zone for UI purposes
     const [isOutroActive, setIsOutroActive] = useState(false);
+    // Track if we're transitioning to next episode (for custom loading indicator)
+    const [isTransitioningToNextEpisode, setIsTransitioningToNextEpisode] = useState(false);
 
     // Reset flags when video source changes
     useEffect(() => {
         hasSkippedIntroRef.current = false;
         hasTriggeredOutroSkipRef.current = false;
         setIsOutroActive(false);
+        // Note: isTransitioningToNextEpisode is NOT reset here immediately
+        // because we want it to persist while the next episode is loading.
+        // It will be reset via the 'canplay' event below.
     }, [src, videoRef]);
+
+    // Handle resetting transition state when video is ready
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video) return;
+
+        const handleReady = () => {
+            setIsTransitioningToNextEpisode(false);
+        };
+
+        video.addEventListener('canplay', handleReady);
+        video.addEventListener('playing', handleReady);
+        return () => {
+            video.removeEventListener('canplay', handleReady);
+            video.removeEventListener('playing', handleReady);
+        };
+    }, [videoRef]);
 
     // Check if we can advance to next episode
     const canAdvanceToNext = useCallback(() => {
         if (totalEpisodes <= 1) return false;
 
+        const nextEpisodeFn = onNextEpisodeRef.current;
+
         if (!isReversed) {
             // Normal order: next is index + 1
-            return currentEpisodeIndex < totalEpisodes - 1 && onNextEpisode;
+            return currentEpisodeIndex < totalEpisodes - 1 && !!nextEpisodeFn;
         } else {
             // Reversed order: next is index - 1 (since we're going backwards)
-            return currentEpisodeIndex > 0 && onNextEpisode;
+            return currentEpisodeIndex > 0 && !!nextEpisodeFn;
         }
-    }, [totalEpisodes, currentEpisodeIndex, onNextEpisode, isReversed]);
+    }, [totalEpisodes, currentEpisodeIndex, isReversed]);
+
+
+    // Keep a stable ref to onNextEpisode to avoid effect re-runs
+    const onNextEpisodeRef = useRef(onNextEpisode);
+    useEffect(() => {
+        onNextEpisodeRef.current = onNextEpisode;
+    }, [onNextEpisode]);
 
     // Helper to trigger next episode exactly once per source
     const triggerNextEpisode = useCallback((reason: string) => {
-        if (!onNextEpisode) return;
+        if (!onNextEpisodeRef.current) return;
 
         // Prevent double trigger for the same source URL
         if (lastHandledSrcRef.current === src) {
@@ -80,10 +111,20 @@ export function useAutoSkip({
             return;
         }
 
+        // Safety check: if we are already transitioning, do not trigger again
+        // This is a critical guard against infinite loops where the trigger might be called repeatedly
+        // before the parent component has a chance to unmount or change the source.
+        if (isTransitioningToNextEpisode) {
+            console.log(`[AutoSkip] Ignoring ${reason} trigger: already transitioning`);
+            return;
+        }
+
         console.log(`[AutoSkip] Triggering next episode via ${reason}`);
         lastHandledSrcRef.current = src;
-        onNextEpisode();
-    }, [src, onNextEpisode]);
+        // Set transitioning state for custom loading indicator
+        setIsTransitioningToNextEpisode(true);
+        onNextEpisodeRef.current();
+    }, [src, isTransitioningToNextEpisode]);
 
     // Validate that duration is ready (not 0, NaN, or Infinity)
     const isDurationValid = useCallback(() => {
@@ -203,5 +244,6 @@ export function useAutoSkip({
         hasSkippedIntro: hasSkippedIntroRef.current,
         hasTriggeredOutroSkip: hasTriggeredOutroSkipRef.current,
         isOutroActive,
+        isTransitioningToNextEpisode,
     };
 }

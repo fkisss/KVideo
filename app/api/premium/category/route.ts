@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export const runtime = 'edge';
 // We still import this type but won't rely on the empty array
-import { ADULT_SOURCES } from '@/lib/api/adult-sources';
+import { PREMIUM_SOURCES } from '@/lib/api/premium-sources';
 
 /**
  * Shared handler for fetching content
@@ -132,5 +132,5 @@ export async function GET(request: Request) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
 
-    return await handleCategoryRequest(ADULT_SOURCES, categoryParam, page, limit);
+    return await handleCategoryRequest(PREMIUM_SOURCES, categoryParam, page, limit);
 }

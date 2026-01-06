@@ -5,11 +5,11 @@ import { SearchForm } from '@/components/search/SearchForm';
 import { NoResults } from '@/components/search/NoResults';
 import { Navbar } from '@/components/layout/Navbar';
 import { SearchResults } from '@/components/home/SearchResults';
-import { useSecretHomePage } from '@/lib/hooks/useSecretHomePage';
-import { AdultContent } from '@/components/adult/AdultContent';
+import { usePremiumHomePage } from '@/lib/hooks/usePremiumHomePage';
+import { PremiumContent } from '@/components/premium/PremiumContent';
 import { FavoritesSidebar } from '@/components/favorites/FavoritesSidebar';
 
-function SecretHomePage() {
+function PremiumHomePage() {
     const {
         query,
         hasSearched,
@@ -20,12 +20,12 @@ function SecretHomePage() {
         totalSources,
         handleSearch,
         handleReset,
-    } = useSecretHomePage();
+    } = usePremiumHomePage();
 
     return (
         <div className="min-h-screen bg-black">
             {/* Glass Navbar */}
-            <Navbar onReset={handleReset} isSecretMode={true} />
+            <Navbar onReset={handleReset} isPremiumMode={true} />
 
             {/* Search Form - Separate from navbar */}
             <div className="max-w-7xl mx-auto px-4 mt-6 mb-8 relative" style={{
@@ -52,6 +52,7 @@ function SecretHomePage() {
                         results={results}
                         availableSources={availableSources}
                         loading={loading}
+                        isPremium={true}
                     />
                 )}
 
@@ -60,26 +61,26 @@ function SecretHomePage() {
                     <NoResults onReset={handleReset} />
                 )}
 
-                {/* Adult Content - Trending and Latest */}
+                {/* Premium Content - Trending and Latest */}
                 {!loading && !hasSearched && (
-                    <AdultContent onSearch={handleSearch} />
+                    <PremiumContent onSearch={handleSearch} />
                 )}
             </main>
 
             {/* Favorites Sidebar - Left */}
-            <FavoritesSidebar />
+            <FavoritesSidebar isPremium={true} />
         </div>
     );
 }
 
-export default function SecretPage() {
+export default function PremiumPage() {
     return (
         <Suspense fallback={
             <div className="min-h-screen flex items-center justify-center bg-black">
                 <div className="animate-spin rounded-full h-16 w-16 border-4 border-[var(--accent-color)] border-t-transparent"></div>
             </div>
         }>
-            <SecretHomePage />
+            <PremiumHomePage />
         </Suspense>
     );
 }

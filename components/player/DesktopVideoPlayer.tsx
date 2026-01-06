@@ -5,6 +5,7 @@ import { useDesktopPlayerState } from './hooks/useDesktopPlayerState';
 import { useDesktopPlayerLogic } from './hooks/useDesktopPlayerLogic';
 import { useHlsPlayer } from './hooks/useHlsPlayer';
 import { useAutoSkip } from './hooks/useAutoSkip';
+import { useStallDetection } from './hooks/useStallDetection';
 import { DesktopControlsWrapper } from './desktop/DesktopControlsWrapper';
 import { DesktopOverlayWrapper } from './desktop/DesktopOverlayWrapper';
 
@@ -78,7 +79,7 @@ export function DesktopVideoPlayer({
   });
 
   // Auto-skip intro/outro and auto-next episode
-  const { isOutroActive } = useAutoSkip({
+  const { isOutroActive, isTransitioningToNextEpisode } = useAutoSkip({
     videoRef,
     currentTime,
     duration,
@@ -88,6 +89,15 @@ export function DesktopVideoPlayer({
     onNextEpisode,
     isReversed,
     src,
+  });
+
+  // Sensitive stalling detection (e.g. video stuck but HTML5 state says playing)
+  useStallDetection({
+    videoRef,
+    isPlaying: data.isPlaying,
+    isDraggingProgressRef: refs.isDraggingProgressRef,
+    setIsLoading: actions.setIsLoading,
+    isTransitioningToNextEpisode
   });
 
   const {
@@ -130,6 +140,7 @@ export function DesktopVideoPlayer({
         onTogglePlay={togglePlay}
         onSkipForward={logic.skipForward}
         onSkipBackward={logic.skipBackward}
+        isTransitioningToNextEpisode={isTransitioningToNextEpisode}
         // More Menu Props
         showMoreMenu={data.showMoreMenu}
         isProxied={src.includes('/api/proxy')}

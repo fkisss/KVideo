@@ -9,6 +9,7 @@ interface DesktopOverlayWrapperProps {
     onTogglePlay: () => void;
     onSkipForward: () => void;
     onSkipBackward: () => void;
+    isTransitioningToNextEpisode?: boolean;
     showMoreMenu: boolean;
     isProxied: boolean;
     onToggleMoreMenu: () => void;
@@ -33,6 +34,7 @@ export function DesktopOverlayWrapper({
     onTogglePlay,
     onSkipForward,
     onSkipBackward,
+    isTransitioningToNextEpisode = false,
     showMoreMenu,
     isProxied,
     onToggleMoreMenu,
@@ -64,6 +66,7 @@ export function DesktopOverlayWrapper({
     return (
         <DesktopOverlay
             isLoading={isLoading}
+            isTransitioningToNextEpisode={isTransitioningToNextEpisode}
             isPlaying={isPlaying}
             showSkipForwardIndicator={showSkipForwardIndicator}
             showSkipBackwardIndicator={showSkipBackwardIndicator}

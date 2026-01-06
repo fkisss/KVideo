@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { SourceManager } from '@/components/settings/SourceManager';
 import type { VideoSource } from '@/lib/types';
-import { ADULT_SOURCES } from '@/lib/api/adult-sources';
+import { PREMIUM_SOURCES } from '@/lib/api/premium-sources';
 
-interface AdultSourceSettingsProps {
+interface PremiumSourceSettingsProps {
     sources: VideoSource[];
     onSourcesChange: (sources: VideoSource[]) => void;
     onRestoreDefaults: () => void;
@@ -11,13 +11,13 @@ interface AdultSourceSettingsProps {
     onEditSource?: (source: VideoSource) => void;
 }
 
-export function AdultSourceSettings({
+export function PremiumSourceSettings({
     sources,
     onSourcesChange,
     onRestoreDefaults,
     onAddSource,
     onEditSource,
-}: AdultSourceSettingsProps) {
+}: PremiumSourceSettingsProps) {
     const [showAllSources, setShowAllSources] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -60,7 +60,7 @@ export function AdultSourceSettings({
     return (
         <div className="bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] p-6 mb-6">
             <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-[var(--text-color)]">成人源管理</h2>
+                <h2 className="text-xl font-semibold text-[var(--text-color)]">高级源管理</h2>
                 <div className="flex gap-2">
                     <button
                         onClick={onRestoreDefaults}
@@ -77,7 +77,7 @@ export function AdultSourceSettings({
                 </div>
             </div>
             <p className="text-sm text-[var(--text-color-secondary)] mb-6">
-                管理成人内容来源，调整优先级和启用状态
+                管理高级内容来源，调整优先级和启用状态
             </p>
 
             {/* Search Bar */}
@@ -105,7 +105,7 @@ export function AdultSourceSettings({
                 onDelete={handleDelete}
                 onReorder={handleReorder}
                 onEdit={onEditSource}
-                defaultIds={ADULT_SOURCES.map(s => s.id)}
+                defaultIds={PREMIUM_SOURCES.map(s => s.id)}
             />
             {!searchQuery && sources.length > 10 && (
                 <button

@@ -30,13 +30,15 @@ interface VideoGroupCardProps {
     cardId: string;
     isActive: boolean;
     onCardClick: (e: React.MouseEvent, cardId: string, videoUrl: string) => void;
+    isPremium?: boolean;
 }
 
 export const VideoGroupCard = memo<VideoGroupCardProps>(({
     group,
     cardId,
     isActive,
-    onCardClick
+    onCardClick,
+    isPremium = false
 }) => {
     const { representative, videos, name } = group;
 
@@ -149,6 +151,7 @@ export const VideoGroupCard = memo<VideoGroupCardProps>(({
                                 remarks={representative.vod_remarks}
                                 size={16}
                                 className="shadow-md"
+                                isPremium={isPremium}
                             />
                         </div>
 

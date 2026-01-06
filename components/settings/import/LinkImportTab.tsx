@@ -82,7 +82,7 @@ export function LinkImportTab({ onImport }: LinkImportTabProps) {
                 </div>
 
                 <p className="text-xs text-[var(--text-color-secondary)] mt-2 ml-1">
-                    支持 JSON 格式的单个或多个源配置链接
+                    支持 JSON 配置文件格式的单个或多个源配置链接
                 </p>
 
                 {error && (
@@ -108,7 +108,7 @@ export function LinkImportTab({ onImport }: LinkImportTabProps) {
                             </div>
                             <div className="bg-[color-mix(in_srgb,var(--bg-color)_50%,transparent)] p-3 rounded-[var(--radius-2xl)]">
                                 <span className="text-xs text-[var(--text-color-secondary)] block">成人源</span>
-                                <span className="text-xl font-bold text-[var(--text-color)]">{preview.adultSources.length}</span>
+                                <span className="text-xl font-bold text-[var(--text-color)]">{preview.premiumSources.length}</span>
                             </div>
                         </div>
 

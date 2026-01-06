@@ -2,14 +2,14 @@
 
 import { AddSourceModal } from '@/components/settings/AddSourceModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { AdultSourceSettings } from '@/components/settings/AdultSourceSettings';
+import { PremiumSourceSettings } from '@/components/settings/PremiumSourceSettings';
 import { SettingsHeader } from '@/components/settings/SettingsHeader';
-import { useSecretSettingsPage } from './hooks/useSecretSettingsPage';
+import { usePremiumSettingsPage } from './hooks/usePremiumSettingsPage';
 import Link from 'next/link';
 
-export default function SecretSettingsPage() {
+export default function PremiumSettingsPage() {
     const {
-        adultSources,
+        premiumSources,
         isAddModalOpen,
         isRestoreDefaultsDialogOpen,
         setIsAddModalOpen,
@@ -20,7 +20,7 @@ export default function SecretSettingsPage() {
         editingSource,
         handleEditSource,
         setEditingSource,
-    } = useSecretSettingsPage();
+    } = usePremiumSettingsPage();
 
     return (
         <div className="min-h-screen bg-black">
@@ -30,7 +30,7 @@ export default function SecretSettingsPage() {
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <Link
-                                href="/secret"
+                                href="/premium"
                                 className="w-10 h-10 flex items-center justify-center rounded-[var(--radius-full)] bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--text-color)] hover:bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] transition-all duration-200 cursor-pointer"
                                 aria-label="返回"
                             >
@@ -39,16 +39,16 @@ export default function SecretSettingsPage() {
                                 </svg>
                             </Link>
                             <div>
-                                <h1 className="text-2xl font-bold text-[var(--text-color)]">成人源设置</h1>
-                                <p className="text-sm text-[var(--text-color-secondary)]">管理成人内容来源</p>
+                                <h1 className="text-2xl font-bold text-[var(--text-color)]">高级源设置</h1>
+                                <p className="text-sm text-[var(--text-color-secondary)]">管理高级内容来源</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Adult Source Management */}
-                <AdultSourceSettings
-                    sources={adultSources}
+                {/* Premium Source Management */}
+                <PremiumSourceSettings
+                    sources={premiumSources}
                     onSourcesChange={handleSourcesChange}
                     onRestoreDefaults={() => setIsRestoreDefaultsDialogOpen(true)}
                     onAddSource={() => {
@@ -67,14 +67,14 @@ export default function SecretSettingsPage() {
                     setEditingSource(null);
                 }}
                 onAdd={handleAddSource}
-                existingIds={adultSources.map(s => s.id)}
+                existingIds={premiumSources.map(s => s.id)}
                 initialValues={editingSource}
             />
 
             <ConfirmDialog
                 isOpen={isRestoreDefaultsDialogOpen}
-                title="恢复默认成人源"
-                message="这将重置所有成人源为默认配置。自定义源将被删除。是否继续？"
+                title="恢复默认高级源"
+                message="这将重置所有高级源为默认配置。自定义源将被删除。是否继续？"
                 confirmText="恢复"
                 cancelText="取消"
                 onConfirm={handleRestoreDefaults}

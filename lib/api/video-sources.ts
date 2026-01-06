@@ -5,10 +5,10 @@
 
 import type { VideoSource } from '@/lib/types';
 import { DEFAULT_SOURCES } from './default-sources';
-import { ADULT_SOURCES } from './adult-sources';
+import { PREMIUM_SOURCES } from './premium-sources';
 
 /**
- * Get source by ID from both default and adult sources
+ * Get source by ID from both default and premium sources
  */
 export function getSourceById(id: string): VideoSource | undefined {
   // Search in default sources first
@@ -17,8 +17,8 @@ export function getSourceById(id: string): VideoSource | undefined {
     return defaultSource;
   }
 
-  // Search in adult sources
-  return ADULT_SOURCES.find(source => source.id === id);
+  // Search in premium sources
+  return PREMIUM_SOURCES.find(source => source.id === id);
 }
 
 

@@ -1,15 +1,15 @@
 'use client';
 
 import { TagManager } from '@/components/home/TagManager';
-import { AdultContentGrid } from './AdultContentGrid';
-import { useAdultTagManager } from '@/lib/hooks/useAdultTagManager';
-import { useAdultContent } from '@/lib/hooks/useAdultContent';
+import { PremiumContentGrid } from './PremiumContentGrid';
+import { usePremiumTagManager } from '@/lib/hooks/usePremiumTagManager';
+import { usePremiumContent } from '@/lib/hooks/usePremiumContent';
 
-interface AdultContentProps {
+interface PremiumContentProps {
     onSearch?: (query: string) => void;
 }
 
-export function AdultContent({ onSearch }: AdultContentProps) {
+export function PremiumContent({ onSearch }: PremiumContentProps) {
     const {
         tags,
         selectedTag,
@@ -24,7 +24,7 @@ export function AdultContent({ onSearch }: AdultContentProps) {
         handleDeleteTag,
         handleRestoreDefaults,
         handleDragEnd,
-    } = useAdultTagManager();
+    } = usePremiumTagManager();
 
     // Get the category value from selected tag
     const categoryValue = tags.find(t => t.id === selectedTag)?.value || '';
@@ -35,7 +35,7 @@ export function AdultContent({ onSearch }: AdultContentProps) {
         hasMore,
         prefetchRef,
         loadMoreRef,
-    } = useAdultContent(categoryValue);
+    } = usePremiumContent(categoryValue);
 
     const handleVideoClick = (video: any) => {
         if (onSearch) {
@@ -63,7 +63,7 @@ export function AdultContent({ onSearch }: AdultContentProps) {
                 onJustAddedTagHandled={() => setJustAddedTag(false)}
             />
 
-            <AdultContentGrid
+            <PremiumContentGrid
                 videos={videos}
                 loading={loading}
                 hasMore={hasMore}

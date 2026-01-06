@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useCallback } from 'react';
 
 interface SearchCache {
   query: string;
@@ -12,24 +12,29 @@ const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
 
 const MAX_CACHED_RESULTS = 300;
 
+/**
+ * Strip unnecessary large fields before caching to save LocalStorage space
+ */
+const stripVideoData = (results: any[]) => {
+  return results.slice(0, MAX_CACHED_RESULTS).map(video => {
+    // Remove large text fields that are only needed for the detail page
+    const {
+      vod_content,
+      vod_actor,
+      vod_director,
+      ...rest
+    } = video;
+    return rest;
+  });
+};
+
 export function useSearchCache() {
   /**
    * Strip unnecessary large fields before caching to save LocalStorage space
    */
-  const stripVideoData = (results: any[]) => {
-    return results.slice(0, MAX_CACHED_RESULTS).map(video => {
-      // Remove large text fields that are only needed for the detail page
-      const {
-        vod_content,
-        vod_actor,
-        vod_director,
-        ...rest
-      } = video;
-      return rest;
-    });
-  };
 
-  const saveToCache = (
+
+  const saveToCache = useCallback((
     query: string,
     results: any[],
     sources: any[]
@@ -68,9 +73,9 @@ export function useSearchCache() {
         console.error('[Cache] Failed to save search results to LocalStorage:', error);
       }
     }
-  };
+  }, []);
 
-  const loadFromCache = (): SearchCache | null => {
+  const loadFromCache = useCallback((): SearchCache | null => {
     try {
       const cached = localStorage.getItem(CACHE_KEY);
       if (!cached) return null;
@@ -88,7 +93,7 @@ export function useSearchCache() {
       console.error('[Cache] Failed to load search results from LocalStorage:', error);
       return null;
     }
-  };
+  }, []);
 
   return {
     saveToCache,

@@ -17,7 +17,7 @@ export function useSubscriptionSync() {
 
             let anyChanged = false;
             let currentSources = [...settings.sources];
-            let currentAdultSources = [...settings.adultSources];
+            let currentPremiumSources = [...settings.premiumSources];
             let updatedSubscriptions = [...settings.subscriptions];
 
             for (let i = 0; i < subscriptions.length; i++) {
@@ -30,8 +30,8 @@ export function useSubscriptionSync() {
                         anyChanged = true;
                     }
 
-                    if (result.adultSources.length > 0) {
-                        currentAdultSources = mergeSources(currentAdultSources, result.adultSources);
+                    if (result.premiumSources.length > 0) {
+                        currentPremiumSources = mergeSources(currentPremiumSources, result.premiumSources);
                         anyChanged = true;
                     }
 
@@ -52,7 +52,7 @@ export function useSubscriptionSync() {
                 settingsStore.saveSettings({
                     ...settings,
                     sources: currentSources,
-                    adultSources: currentAdultSources,
+                    premiumSources: currentPremiumSources,
                     subscriptions: updatedSubscriptions
                 });
             }

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { settingsStore, getDefaultAdultSources, type SortOption } from '@/lib/store/settings-store';
+import { settingsStore, getDefaultPremiumSources, type SortOption } from '@/lib/store/settings-store';
 import type { VideoSource } from '@/lib/types';
 
-export function useSecretSettingsPage() {
-    const [adultSources, setAdultSources] = useState<VideoSource[]>([]);
+export function usePremiumSettingsPage() {
+    const [premiumSources, setPremiumSources] = useState<VideoSource[]>([]);
     const [sortBy, setSortBy] = useState<SortOption>('default');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isRestoreDefaultsDialogOpen, setIsRestoreDefaultsDialogOpen] = useState(false);
@@ -11,24 +11,24 @@ export function useSecretSettingsPage() {
 
     useEffect(() => {
         const settings = settingsStore.getSettings();
-        setAdultSources(settings.adultSources || []);
+        setPremiumSources(settings.premiumSources || []);
         setSortBy(settings.sortBy);
     }, []);
 
     const handleSourcesChange = (newSources: VideoSource[]) => {
-        setAdultSources(newSources);
+        setPremiumSources(newSources);
         const currentSettings = settingsStore.getSettings();
         settingsStore.saveSettings({
             ...currentSettings,
-            adultSources: newSources,
+            premiumSources: newSources,
         });
     };
 
     const handleAddSource = (source: VideoSource) => {
-        const exists = adultSources.some(s => s.id === source.id);
+        const exists = premiumSources.some(s => s.id === source.id);
         const updated = exists
-            ? adultSources.map(s => s.id === source.id ? source : s)
-            : [...adultSources, source];
+            ? premiumSources.map(s => s.id === source.id ? source : s)
+            : [...premiumSources, source];
         handleSourcesChange(updated);
         setEditingSource(null);
     };
@@ -39,13 +39,13 @@ export function useSecretSettingsPage() {
     };
 
     const handleRestoreDefaults = () => {
-        const defaults = getDefaultAdultSources();
+        const defaults = getDefaultPremiumSources();
         handleSourcesChange(defaults);
         setIsRestoreDefaultsDialogOpen(false);
     };
 
     return {
-        adultSources,
+        premiumSources,
         sortBy,
         isAddModalOpen,
         isRestoreDefaultsDialogOpen,

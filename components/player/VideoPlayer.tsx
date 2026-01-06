@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
-import { useHistoryStore } from '@/lib/store/history-store';
+import { useHistory } from '@/lib/store/history-store';
 import { settingsStore } from '@/lib/store/settings-store';
 import { CustomVideoPlayer } from './CustomVideoPlayer';
 import { VideoPlayerError } from './VideoPlayerError';
@@ -18,6 +18,7 @@ interface VideoPlayerProps {
   totalEpisodes?: number;
   onNextEpisode?: () => void;
   isReversed?: boolean;
+  isPremium?: boolean;
 }
 
 export function VideoPlayer({
@@ -27,7 +28,8 @@ export function VideoPlayer({
   onBack,
   totalEpisodes,
   onNextEpisode,
-  isReversed = false
+  isReversed = false,
+  isPremium = false
 }: VideoPlayerProps) {
   const [videoError, setVideoError] = useState<string>('');
   const [useProxy, setUseProxy] = useState(false);
@@ -47,9 +49,8 @@ export function VideoPlayer({
 
   // Use reactive hook to subscribe to history updates
   // This ensures the component re-renders when history is hydrated from localStorage
-  const viewingHistory = useHistoryStore(state => state.viewingHistory);
+  const { viewingHistory, addToHistory } = useHistory(isPremium);
   const searchParams = useSearchParams();
-  const { addToHistory } = useHistoryStore();
 
   // Get video metadata from URL params
   const source = searchParams.get('source') || '';
@@ -184,7 +185,7 @@ export function VideoPlayer({
         />
       ) : (
         <CustomVideoPlayer
-          key={`${useProxy ? 'proxy' : 'direct'}-${retryCount}-${finalPlayUrl}`} // Force remount when switching modes, retrying, or changing source
+          key={`${useProxy ? 'proxy' : 'direct'}-${retryCount}`} // Only remount when switching modes or retrying, NOT when changing episodes
           src={finalPlayUrl}
           onError={handleVideoError}
           onTimeUpdate={handleTimeUpdate}

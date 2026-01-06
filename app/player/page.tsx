@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { VideoPlayer } from '@/components/player/VideoPlayer';
@@ -9,8 +9,7 @@ import { EpisodeList } from '@/components/player/EpisodeList';
 import { PlayerError } from '@/components/player/PlayerError';
 import { SourceSelector, SourceInfo } from '@/components/player/SourceSelector';
 import { useVideoPlayer } from '@/lib/hooks/useVideoPlayer';
-import { useHistoryStore } from '@/lib/store/history-store';
-import { WatchHistorySidebar } from '@/components/history/WatchHistorySidebar';
+import { useHistory } from '@/lib/store/history-store';
 import { FavoritesSidebar } from '@/components/favorites/FavoritesSidebar';
 import { FavoriteButton } from '@/components/favorites/FavoriteButton';
 import { PlayerNavbar } from '@/components/player/PlayerNavbar';
@@ -20,7 +19,8 @@ import Image from 'next/image';
 function PlayerContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { addToHistory } = useHistoryStore();
+  const isPremium = searchParams.get('premium') === '1';
+  const { addToHistory } = useHistory(isPremium);
 
   const videoId = searchParams.get('id');
   const source = searchParams.get('source');
@@ -93,7 +93,7 @@ function PlayerContent() {
     }
   }, [videoData, playUrl, videoId, currentEpisode, source, title, addToHistory]);
 
-  const handleEpisodeClick = (episode: any, index: number) => {
+  const handleEpisodeClick = useCallback((episode: any, index: number) => {
     setCurrentEpisode(index);
     setPlayUrl(episode.url);
     setVideoError('');
@@ -102,7 +102,7 @@ function PlayerContent() {
     const params = new URLSearchParams(searchParams.toString());
     params.set('episode', index.toString());
     router.replace(`/player?${params.toString()}`, { scroll: false });
-  };
+  }, [searchParams, router, setCurrentEpisode, setPlayUrl, setVideoError]);
 
   const handleToggleReverse = (reversed: boolean) => {
     setIsReversed(reversed);
@@ -114,7 +114,7 @@ function PlayerContent() {
   };
 
   // Handle auto-next episode
-  const handleNextEpisode = () => {
+  const handleNextEpisode = useCallback(() => {
     const episodes = videoData?.episodes;
     if (!episodes) return;
 
@@ -129,14 +129,14 @@ function PlayerContent() {
 
     const nextEpisode = episodes[nextIndex];
     if (nextEpisode) {
-      handleEpisodeClick(nextEpisode, nextIndex);
+      handleEpisodeClick(nextEpisode, nextIndex); // handleEpisodeClick relies on state setters, which are stable
     }
-  };
+  }, [videoData, currentEpisode, isReversed, router, searchParams]); // handleEpisodeClick is not memoized, but uses stable hooks setters. wait, handleEpisodeClick is inline too!
 
   return (
     <div className="min-h-screen bg-[var(--bg-color)]">
       {/* Glass Navbar */}
-      <PlayerNavbar />
+      <PlayerNavbar isPremium={isPremium} />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         {loading ? (
@@ -162,6 +162,7 @@ function PlayerContent() {
                 totalEpisodes={videoData?.episodes?.length || 1}
                 onNextEpisode={handleNextEpisode}
                 isReversed={isReversed}
+                isPremium={isPremium}
               />
               <VideoMetadata
                 videoData={videoData}
@@ -180,6 +181,7 @@ function PlayerContent() {
                     type={videoData.type_name}
                     year={videoData.vod_year}
                     size={20}
+                    isPremium={isPremium}
                   />
                   <span className="text-sm text-[var(--text-color-secondary)]">
                     收藏这个视频
@@ -227,10 +229,7 @@ function PlayerContent() {
       </main>
 
       {/* Favorites Sidebar - Left */}
-      <FavoritesSidebar />
-
-      {/* Watch History Sidebar - Right */}
-      <WatchHistorySidebar />
+      <FavoritesSidebar isPremium={isPremium} />
     </div>
   );
 }

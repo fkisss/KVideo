@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSearchCache } from '@/lib/hooks/useSearchCache';
 import { useParallelSearch } from '@/lib/hooks/useParallelSearch';
@@ -16,6 +16,10 @@ export function useHomePage() {
     const [hasSearched, setHasSearched] = useState(false);
     const [currentSortBy, setCurrentSortBy] = useState('default');
 
+    const onUrlUpdate = useCallback((q: string) => {
+        router.replace(`/?q=${encodeURIComponent(q)}`, { scroll: false });
+    }, [router]);
+
     // Search stream hook
     const {
         loading,
@@ -29,7 +33,7 @@ export function useHomePage() {
         applySorting,
     } = useParallelSearch(
         saveToCache,
-        (q: string) => router.replace(`/?q=${encodeURIComponent(q)}`, { scroll: false })
+        onUrlUpdate
     );
 
     // Re-sort results when sort preference changes

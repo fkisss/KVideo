@@ -4,7 +4,7 @@
 
 import type { VideoSource, SourceSubscription } from '@/lib/types';
 import { DEFAULT_SOURCES } from '@/lib/api/default-sources';
-import { ADULT_SOURCES } from '@/lib/api/adult-sources';
+import { PREMIUM_SOURCES } from '@/lib/api/premium-sources';
 import { createSubscription } from '@/lib/utils/source-import-utils';
 
 export type SortOption =
@@ -21,7 +21,7 @@ export type SearchDisplayMode = 'normal' | 'grouped';
 
 export interface AppSettings {
   sources: VideoSource[];
-  adultSources: VideoSource[];
+  premiumSources: VideoSource[];
   subscriptions: SourceSubscription[]; // Source subscriptions for auto-update
   sortBy: SortOption;
   searchHistory: boolean;
@@ -46,7 +46,7 @@ import { exportSettings, importSettings, SEARCH_HISTORY_KEY, WATCH_HISTORY_KEY }
 const SETTINGS_KEY = 'kvideo-settings';
 
 export const getDefaultSources = (): VideoSource[] => DEFAULT_SOURCES;
-export const getDefaultAdultSources = (): VideoSource[] => ADULT_SOURCES;
+export const getDefaultPremiumSources = (): VideoSource[] => PREMIUM_SOURCES;
 
 
 
@@ -92,7 +92,7 @@ export const settingsStore = {
     if (typeof window === 'undefined') {
       return {
         sources: getDefaultSources(),
-        adultSources: getDefaultAdultSources(),
+        premiumSources: getDefaultPremiumSources(),
         subscriptions: getEnvSubscriptions(),
         sortBy: 'default',
         searchHistory: true,
@@ -115,7 +115,7 @@ export const settingsStore = {
     if (!stored) {
       return {
         sources: getDefaultSources(),
-        adultSources: getDefaultAdultSources(),
+        premiumSources: getDefaultPremiumSources(),
         subscriptions: getEnvSubscriptions(),
         sortBy: 'default',
         searchHistory: true,
@@ -168,13 +168,13 @@ export const settingsStore = {
       const validSources = (Array.isArray(parsed.sources) ? parsed.sources : getDefaultSources())
         .filter((s: any) => s && s.id && s.name && s.baseUrl);
 
-      const validAdultSources = (Array.isArray(parsed.adultSources) ? parsed.adultSources : getDefaultAdultSources())
+      const validPremiumSources = (Array.isArray(parsed.premiumSources) ? parsed.premiumSources : getDefaultPremiumSources())
         .filter((s: any) => s && s.id && s.name && s.baseUrl);
 
       // Validate that parsed data has all required properties
       return {
         sources: validSources,
-        adultSources: validAdultSources,
+        premiumSources: validPremiumSources,
         subscriptions: mergedSubscriptions.filter((s: any) => s && s.id && s.name && s.url),
         sortBy: parsed.sortBy || 'default',
         searchHistory: parsed.searchHistory !== undefined ? parsed.searchHistory : true,
@@ -197,7 +197,7 @@ export const settingsStore = {
 
       return {
         sources: getDefaultSources(),
-        adultSources: getDefaultAdultSources(),
+        premiumSources: getDefaultPremiumSources(),
         subscriptions: envSubscriptions,
         sortBy: 'default',
         searchHistory: true,

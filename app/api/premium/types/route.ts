@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { ADULT_SOURCES } from '@/lib/api/adult-sources';
+import { PREMIUM_SOURCES } from '@/lib/api/premium-sources';
 
 export const runtime = 'edge';
 
@@ -171,5 +171,5 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-    return await handleTypesRequest(ADULT_SOURCES);
+    return await handleTypesRequest(PREMIUM_SOURCES);
 }

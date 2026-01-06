@@ -15,6 +15,7 @@ interface UsePlaybackControlsProps {
     onError?: (error: string) => void;
     isDraggingProgressRef: React.MutableRefObject<boolean>;
     speedMenuTimeoutRef: React.MutableRefObject<NodeJS.Timeout | null>;
+    playbackRate: number;
     setPlaybackRate: (rate: number) => void;
     setShowSpeedMenu: (show: boolean) => void;
 }
@@ -32,6 +33,7 @@ export function usePlaybackControls({
     onError,
     isDraggingProgressRef,
     speedMenuTimeoutRef,
+    playbackRate,
     setPlaybackRate,
     setShowSpeedMenu
 }: UsePlaybackControlsProps) {
@@ -69,7 +71,8 @@ export function usePlaybackControls({
     const handleLoadedMetadata = useCallback(() => {
         if (!videoRef.current) return;
         setDuration(videoRef.current.duration);
-        setIsLoading(false);
+        // Removed setIsLoading(false) because metadata loading is too early.
+        // We wait for onCanPlay to set isLoading to false.
 
         // Fix for stuck at 00:00:00:
         // Only seek if we are at the very start (to avoid overwriting a previous seek)
@@ -79,10 +82,15 @@ export function usePlaybackControls({
             videoRef.current.currentTime = startPosition;
         }
 
+        // Apply saved playback rate when new source loads (for episode changes)
+        if (playbackRate !== 1 && videoRef.current.playbackRate !== playbackRate) {
+            videoRef.current.playbackRate = playbackRate;
+        }
+
         videoRef.current.play().catch((err: Error) => {
             console.warn('Autoplay was prevented:', err);
         });
-    }, [videoRef, setDuration, setIsLoading, initialTime]);
+    }, [videoRef, setDuration, setIsLoading, initialTime, playbackRate]);
 
     // Handle late initialization of initialTime (e.g. from async storage hydration)
     useEffect(() => {
@@ -119,6 +127,8 @@ export function usePlaybackControls({
         if (!videoRef.current) return;
         videoRef.current.playbackRate = speed;
         setPlaybackRate(speed);
+        // Persist playback rate to localStorage
+        localStorage.setItem('kvideo-playback-rate', speed.toString());
         setShowSpeedMenu(false);
         if (speedMenuTimeoutRef.current) {
             clearTimeout(speedMenuTimeoutRef.current);

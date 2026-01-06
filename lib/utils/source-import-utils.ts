@@ -11,7 +11,7 @@ export interface ImportSourceFormat {
     id: string;
     name: string;
     baseUrl: string;
-    group?: 'normal' | 'adult';
+    group?: 'normal' | 'premium';
     enabled?: boolean;
     priority?: number;
 }
@@ -21,7 +21,7 @@ export interface ImportSourceFormat {
  */
 export interface ImportResult {
     normalSources: VideoSource[];
-    adultSources: VideoSource[];
+    premiumSources: VideoSource[];
     totalCount: number;
 }
 
@@ -78,15 +78,15 @@ export function parseSourcesFromJson(jsonString: string): ImportResult {
     }
 
     const normalSources: VideoSource[] = [];
-    const adultSources: VideoSource[] = [];
+    const premiumSources: VideoSource[] = [];
 
     for (const item of sourcesArray) {
         if (!isValidSourceFormat(item)) continue;
 
         const source = convertToVideoSource(item);
 
-        if (item.group === 'adult') {
-            adultSources.push(source);
+        if (item.group === 'premium') {
+            premiumSources.push(source);
         } else {
             normalSources.push(source);
         }
@@ -94,8 +94,8 @@ export function parseSourcesFromJson(jsonString: string): ImportResult {
 
     return {
         normalSources,
-        adultSources,
-        totalCount: normalSources.length + adultSources.length,
+        premiumSources,
+        totalCount: normalSources.length + premiumSources.length,
     };
 }
 

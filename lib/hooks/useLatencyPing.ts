@@ -3,7 +3,7 @@
  * Periodically pings video sources when enabled
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { settingsStore } from '@/lib/store/settings-store';
 
 interface LatencyState {
@@ -28,6 +28,12 @@ export function useLatencyPing({
 
     // Check if real-time latency is enabled in settings
     const [realtimeEnabled, setRealtimeEnabled] = useState(false);
+
+    // Stabilize sourceUrls to prevent unnecessary effect re-runs if parent passes new array
+    const stableSourceUrls = useMemo(() => sourceUrls, [
+        // Create a unique key for the sources array
+        sourceUrls.map(s => `${s.id}|${s.baseUrl}`).join(',')
+    ]);
 
     useEffect(() => {
         const settings = settingsStore.getSettings();
@@ -63,12 +69,12 @@ export function useLatencyPing({
     }, []);
 
     const pingAllSources = useCallback(async () => {
-        if (!mountedRef.current || sourceUrls.length === 0) return;
+        if (!mountedRef.current || stableSourceUrls.length === 0) return;
 
         setIsLoading(true);
 
         const results = await Promise.all(
-            sourceUrls.map(async ({ id, baseUrl }) => {
+            stableSourceUrls.map(async ({ id, baseUrl }) => {
                 const latency = await pingSource(id, baseUrl);
                 return { id, latency };
             })
@@ -86,13 +92,13 @@ export function useLatencyPing({
             });
             setIsLoading(false);
         }
-    }, [sourceUrls, pingSource]);
+    }, [stableSourceUrls, pingSource]);
 
     // Start/stop polling based on enabled state
     useEffect(() => {
         mountedRef.current = true;
 
-        const shouldPoll = enabled && realtimeEnabled && sourceUrls.length > 0;
+        const shouldPoll = enabled && realtimeEnabled && stableSourceUrls.length > 0;
 
         if (shouldPoll) {
             // Initial ping
@@ -109,10 +115,10 @@ export function useLatencyPing({
                 intervalRef.current = null;
             }
         };
-    }, [enabled, realtimeEnabled, sourceUrls, intervalMs, pingAllSources]);
+    }, [enabled, realtimeEnabled, stableSourceUrls, intervalMs, pingAllSources]);
 
     const refreshLatency = useCallback((sourceId: string) => {
-        const source = sourceUrls.find(s => s.id === sourceId);
+        const source = stableSourceUrls.find(s => s.id === sourceId);
         if (source) {
             pingSource(sourceId, source.baseUrl).then(latency => {
                 if (latency !== null && mountedRef.current) {
@@ -120,7 +126,7 @@ export function useLatencyPing({
                 }
             });
         }
-    }, [sourceUrls, pingSource]);
+    }, [stableSourceUrls, pingSource]);
 
     const refreshAll = useCallback(() => {
         pingAllSources();

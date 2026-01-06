@@ -1,39 +1,31 @@
 'use client';
 
 import Link from 'next/link';
+import { Video } from '@/lib/types';
 import Image from 'next/image';
 import React from 'react';
 import { Card } from '@/components/ui/Card';
 import { Icons } from '@/components/ui/Icon';
 
-interface AdultVideo {
-    vod_id: string | number;
-    vod_name: string;
-    vod_pic?: string;
-    vod_remarks?: string;
-    type_name?: string;
-    source: string;
-}
-
-interface AdultContentGridProps {
-    videos: AdultVideo[];
+interface PremiumContentGridProps {
+    videos: Video[];
     loading: boolean;
     hasMore: boolean;
-    onVideoClick?: (video: AdultVideo) => void;
+    onVideoClick?: (video: Video) => void;
     prefetchRef: React.RefObject<HTMLDivElement | null>;
     loadMoreRef: React.RefObject<HTMLDivElement | null>;
 }
 
-export function AdultContentGrid({
+export function PremiumContentGrid({
     videos,
     loading,
     hasMore,
     onVideoClick,
     prefetchRef,
     loadMoreRef,
-}: AdultContentGridProps) {
+}: PremiumContentGridProps) {
     if (videos.length === 0 && !loading) {
-        return <AdultGridEmpty />;
+        return <PremiumGridEmpty />;
     }
 
     return (
@@ -42,8 +34,8 @@ export function AdultContentGrid({
                 {videos.map((video) => (
                     <Link
                         key={`${video.source}-${video.vod_id}`}
-                        href={`/secret?q=${encodeURIComponent(video.vod_name)}`}
-                        onClick={(e) => {
+                        href={`/premium?q=${encodeURIComponent(video.vod_name)}`}
+                        onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
                             // Allow default behavior for modifier keys (new tab, etc.)
                             if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
 
@@ -56,8 +48,8 @@ export function AdultContentGrid({
                             zIndex: 1,
                             contentVisibility: 'auto'
                         }}
-                        onMouseEnter={(e) => (e.currentTarget.style.zIndex = '100')}
-                        onMouseLeave={(e) => (e.currentTarget.style.zIndex = '1')}
+                        onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget.style.zIndex = '100')}
+                        onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget.style.zIndex = '1')}
                     >
                         <Card hover={false} className="p-0 h-full shadow-[0_2px_8px_var(--shadow-color)] hover:shadow-[0_8px_24px_var(--shadow-color)] transition-shadow duration-200 ease-out" blur={false}>
                             <div className="relative aspect-[2/3] bg-[var(--glass-bg)] rounded-[var(--radius-2xl)]">
@@ -103,18 +95,18 @@ export function AdultContentGrid({
             {hasMore && !loading && <div ref={prefetchRef} className="h-1" />}
 
             {/* Loading Indicator */}
-            {loading && <AdultGridLoading />}
+            {loading && <PremiumGridLoading />}
 
             {/* Intersection Observer Target */}
             {hasMore && !loading && <div ref={loadMoreRef} className="h-20" />}
 
             {/* No More Content */}
-            {!hasMore && videos.length > 0 && <AdultGridNoMore />}
+            {!hasMore && videos.length > 0 && <PremiumGridNoMore />}
         </>
     );
 }
 
-function AdultGridLoading() {
+function PremiumGridLoading() {
     return (
         <div className="flex justify-center py-12">
             <div className="flex flex-col items-center gap-3">
@@ -125,7 +117,7 @@ function AdultGridLoading() {
     );
 }
 
-function AdultGridNoMore() {
+function PremiumGridNoMore() {
     return (
         <div className="text-center py-12">
             <p className="text-[var(--text-color-secondary)]">没有更多内容了</p>
@@ -133,7 +125,7 @@ function AdultGridNoMore() {
     );
 }
 
-function AdultGridEmpty() {
+function PremiumGridEmpty() {
     return (
         <div className="text-center py-20">
             <Icons.Film size={64} className="text-[var(--text-color-secondary)] mx-auto mb-4" />

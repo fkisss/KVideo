@@ -177,15 +177,15 @@ export function useSettingsPage() {
             // Merge normal sources
             let updatedSources = mergeSources(sources, result.normalSources);
 
-            // Merge adult sources if needed
+            // Merge premium sources if needed
             const currentSettings = settingsStore.getSettings();
-            let updatedAdultSources = mergeSources(currentSettings.adultSources, result.adultSources);
+            let updatedPremiumSources = mergeSources(currentSettings.premiumSources, result.premiumSources);
 
             // Save everything
             settingsStore.saveSettings({
                 ...currentSettings,
                 sources: updatedSources,
-                adultSources: updatedAdultSources,
+                premiumSources: updatedPremiumSources,
             });
 
             setSources(updatedSources); // Update local state

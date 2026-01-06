@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useInfiniteScroll } from '@/lib/hooks/useInfiniteScroll';
 import { settingsStore } from '@/lib/store/settings-store';
 
-interface AdultVideo {
+interface PremiumVideo {
     vod_id: string | number;
     vod_name: string;
     vod_pic?: string;
@@ -13,8 +13,8 @@ interface AdultVideo {
 
 const PAGE_LIMIT = 20;
 
-export function useAdultContent(categoryValue: string) {
-    const [videos, setVideos] = useState<AdultVideo[]>([]);
+export function usePremiumContent(categoryValue: string) {
+    const [videos, setVideos] = useState<PremiumVideo[]>([]);
     const [loading, setLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const [page, setPage] = useState(1);
@@ -26,23 +26,23 @@ export function useAdultContent(categoryValue: string) {
         try {
             // Get sources from settings
             const settings = settingsStore.getSettings();
-            // Resolve all relevant sources (adult sources + subscriptions that might be adult)
-            // For simplicity, we send all enabled adult sources.
-            const adultSources = [
-                ...settings.adultSources,
-                // Check if any subscription sources are marked as adult
-                ...settings.subscriptions.filter(s => (s as any).group === 'adult')
+            // Resolve all relevant sources (premium sources + subscriptions that might be premium)
+            // For simplicity, we send all enabled premium sources.
+            const premiumSources = [
+                ...settings.premiumSources,
+                // Check if any subscription sources are marked as premium
+                ...settings.subscriptions.filter(s => (s as any).group === 'premium')
             ].filter(s => (s as any).enabled !== false);
 
             // Should we include normal subscriptions too if categoryValue requests them?
             // The API handles filtering by categoryValue map.
-            // If categoryValue is empty (Recommend), we use all enabled adult sources.
+            // If categoryValue is empty (Recommend), we use all enabled premium sources.
 
-            const response = await fetch('/api/adult/category', {
+            const response = await fetch('/api/premium/category', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    sources: adultSources,
+                    sources: premiumSources,
                     category: categoryValue,
                     page: pageNum.toString(),
                     limit: PAGE_LIMIT.toString()
