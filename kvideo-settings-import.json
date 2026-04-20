@@ -1,5 +1,4 @@
-[
-      {
+[{
         "id": "feifan",
         "name": "非凡资源",
         "baseUrl": "http://ffzy5.tv/api.php/provide/vod",
@@ -124,7 +123,7 @@
         "detailPath": "",
         "enabled": true,
         "priority": 14
-      }，
+      },
       {
         "id": "guangsu",
         "name": "光速资源",
@@ -160,7 +159,7 @@
         "detailPath": "",
         "enabled": true,
         "priority": 18
-      }，
+      },
       {
         "id": "xinlang",
         "name": "新浪资源",
@@ -187,7 +186,7 @@
         "detailPath": "",
         "enabled": true,
         "priority": 21
-      }，
+      },
       {
         "id": "jiangyu",
         "name": "鲸鱼资源",
@@ -196,7 +195,7 @@
         "detailPath": "",
         "enabled": true,
         "priority": 22
-      }，
+      },
       {
         "id": "yilingba",
         "name": "1080资源",
@@ -205,7 +204,7 @@
         "detailPath": "",
         "enabled": true,
         "priority": 23
-      }，
+      },
       {
         "id": "aidan",
         "name": "爱蛋资源",
@@ -214,7 +213,7 @@
         "detailPath": "",
         "enabled": true,
         "priority": 24
-      }，
+      },
       {
         "id": "leba",
         "name": "乐播资源",
@@ -259,7 +258,7 @@
         "detailPath": "",
         "enabled": true,
         "priority": 29
-      }，
+      },
       {
         "id": "feifan1",
         "name": "非凡线路1",
@@ -340,5 +339,4 @@
         "detailPath": "",
         "enabled": true,
         "priority": 38
-      }
-]
+      }]
