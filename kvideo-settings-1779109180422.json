@@ -1,6 +1,4 @@
-{
-  "settings": {
-    "sources": [
+[
       {
         "id": "feifan",
         "name": "非凡资源",
@@ -421,44 +419,4 @@
         "detailPath": "/provide/vod",
         "enabled": true
       }
-    ],
-    "premiumSources": [],
-    "subscriptions": [
-      {
-        "id": "sub_1776661700431_564nqi",
-        "name": "默认源",
-        "url": "https://raw.githubusercontent.com/fkisss/KVideo/refs/heads/main/kvideo-settings-import.json",
-        "lastUpdated": 1779108936572,
-        "autoRefresh": true
-      }
-    ],
-    "sortBy": "default",
-    "searchHistory": true,
-    "watchHistory": true,
-    "autoNextEpisode": true,
-    "autoSkipIntro": false,
-    "skipIntroSeconds": 0,
-    "autoSkipOutro": false,
-    "skipOutroSeconds": 0,
-    "seekStepSeconds": 10,
-    "showModeIndicator": false,
-    "adFilter": false,
-    "adFilterMode": "heuristic",
-    "adKeywords": [],
-    "realtimeLatency": false,
-    "searchDisplayMode": "normal",
-    "episodeReverseOrder": false,
-    "fullscreenType": "native",
-    "proxyMode": "retry",
-    "rememberScrollPosition": true,
-    "personalizedRecommendations": true,
-    "videoTogetherEnabled": false,
-    "danmakuEnabled": false,
-    "danmakuApiUrl": "",
-    "danmakuOpacity": 0.7,
-    "danmakuFontSize": 20,
-    "danmakuDisplayArea": 0.5,
-    "locale": "zh-CN",
-    "blockedCategories": []
-  }
-}
+    ]
