@@ -1,8 +1,8 @@
 /**
- * Browse List API Route
- * Fetches the video list (片源) of a single source, optionally filtered by a category (type),
- * via the CMS `ac=detail&t=<typeId>&pg=<page>` endpoint.
- * Non-invasive addition: mirrors the existing detail/category CMS conventions, scoped to one source.
+ * Browse Types API Route
+ * Fetches the category (片单) list of a single video source via the CMS `ac=list` endpoint.
+ * Non-invasive addition: reuses the same CMS API convention as the existing search/detail routes,
+ * but scoped to ONE source at a time so users can browse each interface separately.
  */
 
 import { NextResponse } from 'next/server';
@@ -10,30 +10,17 @@ import type { VideoSource } from '@/lib/types';
 
 export const runtime = 'edge';
 
-interface BrowseVideo {
-    vod_id: number | string;
-    vod_name: string;
-    vod_pic?: string;
-    vod_remarks?: string;
-    type_name?: string;
-    vod_year?: string;
-    source: string;
+interface Category {
+    type_id: number | string;
+    type_name: string;
 }
 
-async function fetchSourceList(
-    source: VideoSource,
-    typeId: string,
-    page: number
-): Promise<{ videos: BrowseVideo[]; page: number; pagecount: number }> {
+async function fetchSourceCategories(source: VideoSource): Promise<Category[]> {
     const url = new URL(`${source.baseUrl}${source.searchPath || ''}`);
-    url.searchParams.set('ac', 'detail');
-    url.searchParams.set('pg', page.toString());
-    if (typeId) {
-        url.searchParams.set('t', typeId);
-    }
+    url.searchParams.set('ac', 'list');
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
 
     try {
         const response = await fetch(url.toString(), {
@@ -49,23 +36,11 @@ async function fetchSourceList(
         }
 
         const data = await response.json();
-        const rawList = Array.isArray(data?.list) ? data.list : [];
+        const rawList: Category[] = Array.isArray(data?.class) ? data.class : [];
 
-        const videos: BrowseVideo[] = rawList.map((item: Record<string, unknown>) => ({
-            vod_id: item.vod_id as number | string,
-            vod_name: (item.vod_name as string) || '',
-            vod_pic: item.vod_pic as string | undefined,
-            vod_remarks: item.vod_remarks as string | undefined,
-            type_name: item.type_name as string | undefined,
-            vod_year: item.vod_year as string | undefined,
-            source: source.id,
-        }));
-
-        return {
-            videos,
-            page: typeof data?.page === 'number' ? data.page : page,
-            pagecount: typeof data?.pagecount === 'number' ? data.pagecount : 1,
-        };
+        return rawList
+            .filter((cat) => cat && typeof cat.type_name === 'string' && cat.type_name.trim().length > 0)
+            .map((cat) => ({ type_id: cat.type_id, type_name: cat.type_name.trim() }));
     } finally {
         clearTimeout(timeoutId);
     }
@@ -75,22 +50,25 @@ export async function POST(request: Request) {
     try {
         const body = await request.json();
         const source: VideoSource | undefined = body?.source;
-        const typeId: string = body?.typeId ? String(body.typeId) : '';
-        const page = Math.max(1, parseInt(String(body?.page ?? '1'), 10) || 1);
 
         if (!source || !source.baseUrl) {
             return NextResponse.json(
-                { videos: [], page: 1, pagecount: 1, error: 'Missing source configuration' },
+                { categories: [], error: 'Missing source configuration' },
                 { status: 400 }
             );
         }
 
-        const result = await fetchSourceList(source, typeId, page);
-        return NextResponse.json(result);
+        const categories = await fetchSourceCategories(source);
+
+        return NextResponse.json({
+            sourceId: source.id,
+            sourceName: source.name,
+            categories,
+        });
     } catch (error) {
-        console.error('Browse list error:', error);
+        console.error('Browse types error:', error);
         return NextResponse.json(
-            { videos: [], page: 1, pagecount: 1, error: 'Failed to fetch list' },
+            { categories: [], error: 'Failed to fetch categories' },
             { status: 500 }
         );
     }
