@@ -68,17 +68,17 @@ export function Navbar({ onReset, isPremiumMode = false }: NavbarProps) {
 
                         <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                             {/* Browse Link - browse each source's categories and lists */}
-{!isPremiumMode && (
-<Link
-    href="/browse"
-    className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-[var(--radius-full)] bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--text-color)] hover:bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] transition-all duration-200 cursor-pointer"
-    aria-label="分类浏览"
-    title="分类浏览"
-    data-focusable
->
-    <Icons.Layers size={16} className="sm:w-5 sm:h-5" />
-</Link>
-)}
+                            {!isPremiumMode && (
+                            <Link
+                                href="/browse"
+                                className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-[var(--radius-full)] bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--text-color)] hover:bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] transition-all duration-200 cursor-pointer"
+                                aria-label="分类浏览"
+                                title="分类浏览"
+                                data-focusable
+                            >
+                                <Icons.Layers size={16} className="sm:w-5 sm:h-5" />
+                            </Link>
+                            )}
                            
                             {/* IPTV Link - only show if user has iptv_access or no auth configured */}
                             {iptvEnabled && hasPermission('iptv_access') && (
