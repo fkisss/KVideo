@@ -1,168 +1,309 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { settingsStore } from '@/lib/store/settings-store';
-import { Lock } from 'lucide-react';
+import { Lock, User } from 'lucide-react';
+import { clearSession, getSession, setSession, type AuthSession } from '@/lib/store/auth-store';
+import { resolvePasswordGateState } from '@/lib/auth/password-gate-state';
+import { useSubscriptionSync } from '@/lib/hooks/useSubscriptionSync';
+import { hasStoredAppSetting, settingsStore } from '@/lib/store/settings-store';
+import { useIPTVStore } from '@/lib/store/iptv-store';
 
-const SESSION_UNLOCKED_KEY = 'kvideo-unlocked';
+type LoginMode = 'none' | 'legacy_password' | 'managed';
 
-export function PasswordGate({ children, hasEnvPassword: initialHasEnvPassword }: { children: React.ReactNode, hasEnvPassword: boolean }) {
-    const [isLocked, setIsLocked] = useState(true);
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState(false);
-    const [isClient, setIsClient] = useState(false);
-    const [hasEnvPassword, setHasEnvPassword] = useState(initialHasEnvPassword);
-    const [isValidating, setIsValidating] = useState(false);
+function syncIPTVSources(rawValue: string) {
+  const iptvStore = useIPTVStore.getState();
 
-    useEffect(() => {
-        const settings = settingsStore.getSettings();
-        const isUnlocked = sessionStorage.getItem(SESSION_UNLOCKED_KEY) === 'true';
+  let entries: { name: string; url: string }[] = [];
 
-        // Determine initial lock state immediately
-        // Lock if (local password enabled OR env password exists) AND not already unlocked in session
-        const shouldBeLocked = (settings.passwordAccess || initialHasEnvPassword) && !isUnlocked;
+  try {
+    const parsed = JSON.parse(rawValue);
+    if (Array.isArray(parsed)) {
+      entries = parsed.filter((item: unknown): item is { name: string; url: string } => {
+        if (!item || typeof item !== 'object') return false;
+        const candidate = item as { name?: unknown; url?: unknown };
+        return typeof candidate.url === 'string';
+      });
+    }
+  } catch {
+    if (rawValue.includes('http')) {
+      const urls = rawValue.split(',').map((value) => value.trim()).filter((value) => value.startsWith('http'));
+      entries = urls.map((url, index) => ({
+        name: urls.length > 1 ? `直播源 ${index + 1}` : '直播源',
+        url,
+      }));
+    }
+  }
 
-        setIsLocked(shouldBeLocked);
+  iptvStore.syncBuiltinSources(entries);
+}
+
+function syncMergeSources(rawValue: string) {
+  const enabled = rawValue === 'true' || rawValue === '1';
+  if (!enabled) return;
+
+  const settings = settingsStore.getSettings();
+  if (settings.searchDisplayMode !== 'grouped') {
+    settingsStore.saveSettings({
+      ...settings,
+      searchDisplayMode: 'grouped',
+    });
+  }
+}
+
+function syncDanmakuApiUrl(rawValue: string) {
+  if (!rawValue || hasStoredAppSetting('danmakuApiUrl')) return;
+
+  const settings = settingsStore.getSettings();
+  if (settings.danmakuApiUrl !== rawValue) {
+    settingsStore.saveSettings({
+      ...settings,
+      danmakuApiUrl: rawValue,
+    });
+  }
+}
+
+function applyRuntimeConfig(data: {
+  subscriptionSources?: string;
+  iptvSources?: string;
+  mergeSources?: string;
+  danmakuApiUrl?: string;
+}) {
+  if (data.subscriptionSources) {
+    settingsStore.syncEnvSubscriptions(data.subscriptionSources);
+  }
+
+  if (data.iptvSources) {
+    syncIPTVSources(data.iptvSources);
+  }
+
+  if (data.mergeSources) {
+    syncMergeSources(data.mergeSources);
+  }
+
+  if (data.danmakuApiUrl) {
+    syncDanmakuApiUrl(data.danmakuApiUrl);
+  }
+}
+
+function toAuthSession(session: {
+  accountId: string;
+  profileId: string;
+  username?: string;
+  name: string;
+  role: AuthSession['role'];
+  customPermissions?: AuthSession['customPermissions'];
+  mode?: AuthSession['mode'];
+}): AuthSession {
+  return {
+    accountId: session.accountId,
+    profileId: session.profileId,
+    username: session.username,
+    name: session.name,
+    role: session.role,
+    customPermissions: session.customPermissions,
+    mode: session.mode,
+  };
+}
+
+export function PasswordGate({
+  children,
+  hasAuth: initialHasAuth,
+}: {
+  children: React.ReactNode;
+  hasAuth: boolean;
+}) {
+  useSubscriptionSync();
+
+  const [isLocked, setIsLocked] = useState(true);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isClient, setIsClient] = useState(false);
+  const [persistSession, setPersistSession] = useState(true);
+  const [isValidating, setIsValidating] = useState(false);
+  const [loginMode, setLoginMode] = useState<LoginMode>('none');
+
+  useEffect(() => {
+    let mounted = true;
+
+    const init = async () => {
+      const mirroredSession = getSession();
+
+      try {
+        const [configRes, sessionRes] = await Promise.all([
+          fetch('/api/auth'),
+          fetch('/api/auth/session'),
+        ]);
+
+        if (!configRes.ok) {
+          throw new Error('Failed to fetch auth config');
+        }
+
+        const config = await configRes.json();
+        const sessionStatus = sessionRes.ok ? await sessionRes.json() : { authenticated: false, session: null };
+
+        if (!mounted) return;
+
+        setPersistSession(config.persistSession);
+        setLoginMode(config.loginMode || 'none');
+        applyRuntimeConfig(config);
+
+        const serverSession = sessionStatus.authenticated && sessionStatus.session
+          ? toAuthSession(sessionStatus.session)
+          : null;
+        const gateState = resolvePasswordGateState({
+          hasAuth: !!config.hasAuth,
+          serverSession,
+          mirroredSession,
+          persistSession: config.persistSession,
+        });
+
+        if (gateState.action === 'unlock-session') {
+          setSession(gateState.session, gateState.persistSession);
+          setIsLocked(false);
+          setIsClient(true);
+          return;
+        }
+
+        if (gateState.action === 'unlock-public') {
+          setIsLocked(false);
+          setIsClient(true);
+          return;
+        }
+
+        if (gateState.clearMirroredSession) {
+          clearSession();
+        }
+
+        setIsLocked(true);
         setIsClient(true);
-
-        // Still run background checks to keep everything in sync
-        checkEnvPasswordStatus();
-        checkLockStatus();
-    }, [initialHasEnvPassword]);
-
-    const checkEnvPasswordStatus = async () => {
-        try {
-            const res = await fetch('/api/config');
-            const data = await res.json();
-            setHasEnvPassword(data.hasEnvPassword);
-
-            // Sync subscription sources if provided by environment
-            if (data.subscriptionSources) {
-                settingsStore.syncEnvSubscriptions(data.subscriptionSources);
-            }
-        } catch {
-            // Silently fail
-        }
+      } catch {
+        if (!mounted) return;
+        setIsLocked(initialHasAuth && !mirroredSession);
+        setIsClient(true);
+      }
     };
 
-    const checkLockStatus = async () => {
-        const settings = settingsStore.getSettings();
-        const isUnlocked = sessionStorage.getItem(SESSION_UNLOCKED_KEY) === 'true';
+    init();
 
-        try {
-            const res = await fetch('/api/config');
-            const data = await res.json();
-            const envPasswordSet = data.hasEnvPassword;
-
-            // Updated lock state check
-            const currentlyLocked = (settings.passwordAccess || envPasswordSet) && !isUnlocked;
-            setIsLocked(currentlyLocked);
-        } catch {
-            // Handle error by checking local settings
-            const currentlyLocked = settings.passwordAccess && !isUnlocked;
-            setIsLocked(currentlyLocked);
-        }
+    return () => {
+      mounted = false;
     };
+  }, [initialHasAuth]);
 
+  const handleUnlock = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setIsValidating(true);
+    setError('');
 
-    const handleUnlock = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsValidating(true);
+    try {
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: loginMode === 'managed' ? username : undefined,
+          password,
+        }),
+      });
+      const data = await response.json();
 
-        const settings = settingsStore.getSettings();
-
-        // First check local passwords
-        if (settings.accessPasswords.includes(password)) {
-            sessionStorage.setItem(SESSION_UNLOCKED_KEY, 'true');
-            setIsLocked(false);
-            setError(false);
-            setIsValidating(false);
-            return;
-        }
-
-        // Then check env password via API
-        if (hasEnvPassword) {
-            try {
-                const res = await fetch('/api/config', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password }),
-                });
-                const data = await res.json();
-                if (data.valid) {
-                    sessionStorage.setItem(SESSION_UNLOCKED_KEY, 'true');
-                    setIsLocked(false);
-                    setError(false);
-                    setIsValidating(false);
-                    return;
-                }
-            } catch {
-                // API error, proceed to show error
-            }
-        }
-
-        // Password didn't match
-        setError(true);
+      if (data.valid && data.session) {
+        setSession(toAuthSession(data.session), data.persistSession ?? persistSession);
+        setIsLocked(false);
+        setIsClient(true);
         setIsValidating(false);
-        const form = document.getElementById('password-form');
-        form?.classList.add('animate-shake');
-        setTimeout(() => form?.classList.remove('animate-shake'), 500);
-    };
-
-    if (!isClient) return null; // Prevent hydration mismatch
-
-    if (!isLocked) {
-        return <>{children}</>;
+        return;
+      }
+    } catch {
+      // Ignore network errors and show the same message as invalid credentials.
     }
 
-    return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[var(--bg-color)] bg-[image:var(--bg-image)] text-[var(--text-color)]">
-            <div className="w-full max-w-md p-4">
-                <form
-                    id="password-form"
-                    onSubmit={handleUnlock}
-                    className="bg-[var(--glass-bg)] backdrop-blur-[25px] saturate-[180%] border border-[var(--glass-border)] rounded-[var(--radius-2xl)] p-8 shadow-[var(--shadow-md)] flex flex-col items-center gap-6 transition-all duration-[0.4s] cubic-bezier(0.2,0.8,0.2,1)"
-                >
-                    <div className="w-16 h-16 rounded-[var(--radius-full)] bg-[var(--accent-color)]/10 flex items-center justify-center text-[var(--accent-color)] mb-2 shadow-[var(--shadow-sm)] border border-[var(--glass-border)]">
-                        <Lock size={32} />
-                    </div>
+    setError(loginMode === 'managed' ? '用户名或密码错误' : '密码错误');
+    setIsValidating(false);
+    const form = document.getElementById('password-form');
+    form?.classList.add('animate-shake');
+    setTimeout(() => form?.classList.remove('animate-shake'), 500);
+  };
 
-                    <div className="text-center space-y-2">
-                        <h2 className="text-2xl font-bold">访问受限</h2>
-                        <p className="text-[var(--text-color-secondary)]">请输入访问密码以继续</p>
-                    </div>
+  if (!isClient) return null;
 
-                    <div className="w-full space-y-4">
-                        <div className="space-y-2">
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={(e) => {
-                                    setPassword(e.target.value);
-                                    setError(false);
-                                }}
-                                placeholder="输入密码..."
-                                className={`w-full px-4 py-3 rounded-[var(--radius-2xl)] bg-[var(--glass-bg)] border ${error ? 'border-red-500' : 'border-[var(--glass-border)]'
-                                    } focus:outline-none focus:border-[var(--accent-color)] focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--accent-color)_30%,transparent)] transition-all duration-[0.4s] cubic-bezier(0.2,0.8,0.2,1) text-[var(--text-color)] placeholder-[var(--text-color-secondary)]`}
-                                autoFocus
-                            />
-                            {error && (
-                                <p className="text-sm text-red-500 text-center animate-pulse">
-                                    密码错误
-                                </p>
-                            )}
-                        </div>
+  if (!isLocked) {
+    return <>{children}</>;
+  }
 
-                        <button
-                            type="submit"
-                            className="w-full py-3 px-4 bg-[var(--accent-color)] text-white font-bold rounded-[var(--radius-2xl)] hover:translate-y-[-2px] hover:brightness-110 shadow-[var(--shadow-sm)] hover:shadow-[0_4px_8px_var(--shadow-color)] active:translate-y-0 active:scale-[0.98] transition-all duration-200"
-                        >
-                            解锁访问
-                        </button>
-                    </div>
-                </form>
+  const showManagedFields = loginMode === 'managed';
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[var(--bg-color)] bg-[image:var(--bg-image)] text-[var(--text-color)]">
+      <div className="w-full max-w-md p-4">
+        <form
+          id="password-form"
+          onSubmit={handleUnlock}
+          className="bg-[var(--glass-bg)] backdrop-blur-[25px] saturate-[180%] border border-[var(--glass-border)] rounded-[var(--radius-2xl)] p-8 shadow-[var(--shadow-md)] flex flex-col items-center gap-6 transition-all duration-[0.4s] cubic-bezier(0.2,0.8,0.2,1)"
+        >
+          <div className="w-16 h-16 rounded-[var(--radius-full)] bg-[var(--accent-color)]/10 flex items-center justify-center text-[var(--accent-color)] mb-2 shadow-[var(--shadow-sm)] border border-[var(--glass-border)]">
+            <Lock size={32} />
+          </div>
+
+          <div className="text-center space-y-2">
+            <h2 className="text-2xl font-bold">访问受限</h2>
+            <p className="text-[var(--text-color-secondary)]">
+              {showManagedFields ? '请输入用户名和密码以继续' : '请输入访问密码以继续'}
+            </p>
+          </div>
+
+          <div className="w-full space-y-4">
+            {showManagedFields && (
+              <div className="space-y-2">
+                <div className="relative">
+                  <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-color-secondary)]" />
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(event) => {
+                      setUsername(event.target.value);
+                      setError('');
+                    }}
+                    placeholder="输入用户名..."
+                    className="w-full pl-11 pr-4 py-3 rounded-[var(--radius-2xl)] bg-[var(--glass-bg)] border border-[var(--glass-border)] focus:outline-none focus:border-[var(--accent-color)] focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--accent-color)_30%,transparent)] transition-all duration-[0.4s] cubic-bezier(0.2,0.8,0.2,1) text-[var(--text-color)] placeholder-[var(--text-color-secondary)]"
+                    autoComplete="username"
+                    autoFocus
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <input
+                type="password"
+                value={password}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  setError('');
+                }}
+                placeholder={showManagedFields ? '输入密码...' : '输入密码...'}
+                className={`w-full px-4 py-3 rounded-[var(--radius-2xl)] bg-[var(--glass-bg)] border ${error ? 'border-red-500' : 'border-[var(--glass-border)]'} focus:outline-none focus:border-[var(--accent-color)] focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--accent-color)_30%,transparent)] transition-all duration-[0.4s] cubic-bezier(0.2,0.8,0.2,1) text-[var(--text-color)] placeholder-[var(--text-color-secondary)]`}
+                autoFocus={!showManagedFields}
+                autoComplete={showManagedFields ? 'current-password' : 'off'}
+              />
+              {error && (
+                <p className="text-sm text-red-500 text-center animate-pulse">
+                  {error}
+                </p>
+              )}
             </div>
-            <style jsx global>{`
+
+            <button
+              type="submit"
+              disabled={isValidating}
+              className="w-full py-3 px-4 bg-[var(--accent-color)] text-white font-bold rounded-[var(--radius-2xl)] hover:translate-y-[-2px] hover:brightness-110 shadow-[var(--shadow-sm)] hover:shadow-[0_4px_8px_var(--shadow-color)] active:translate-y-0 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isValidating ? '验证中...' : '登录'}
+            </button>
+          </div>
+        </form>
+      </div>
+      <style jsx global>{`
         @keyframes shake {
           0%, 100% { transform: translateX(0); }
           25% { transform: translateX(-5px); }
@@ -172,6 +313,6 @@ export function PasswordGate({ children, hasEnvPassword: initialHasEnvPassword }
           animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both;
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 }

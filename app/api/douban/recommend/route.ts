@@ -25,6 +25,15 @@ export async function GET(request: Request) {
     }
 
     const data = await response.json();
+
+    // 转换图片链接使用代理
+    if (data.subjects && Array.isArray(data.subjects)) {
+      data.subjects = data.subjects.map((item: any) => ({
+        ...item,
+        cover: item.cover ? `/api/douban/image?url=${encodeURIComponent(item.cover)}` : item.cover,
+      }));
+    }
+
     return NextResponse.json(data);
   } catch (error) {
     console.error('Douban API error:', error);

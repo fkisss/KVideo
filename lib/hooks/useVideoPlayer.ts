@@ -32,7 +32,8 @@ export function useVideoPlayer(
   videoId: string | null,
   source: string | null,
   episodeParam: string | null,
-  isReversed: boolean = false
+  isReversed: boolean = false,
+  onSourceUnavailable?: () => void
 ): UseVideoPlayerReturn {
   const [videoData, setVideoData] = useState<VideoData | null>(null);
   // Initialize loading to true if we have the necessary params to start fetching
@@ -45,6 +46,7 @@ export function useVideoPlayer(
   // This solves the stale closure problem while keeping fetchVideoDetails stable for the player
   const episodeParamRef = useRef(episodeParam);
   const isReversedRef = useRef(isReversed);
+  const onSourceUnavailableRef = useRef(onSourceUnavailable);
 
   useEffect(() => {
     episodeParamRef.current = episodeParam;
@@ -54,10 +56,20 @@ export function useVideoPlayer(
     isReversedRef.current = isReversed;
   }, [isReversed]);
 
+  useEffect(() => {
+    onSourceUnavailableRef.current = onSourceUnavailable;
+  }, [onSourceUnavailable]);
+
+
+
   const fetchVideoDetails = useCallback(async () => {
     if (!videoId || !source) return;
 
     try {
+      // Don't clear error immediately if we are just retrying silently, 
+      // but for manual retry or initial load we should.
+      // Let's clear it to show loading state if we want, or keep it.
+      // Standard behavior: clear error and show loading.
       setVideoError('');
       setLoading(true);
 
@@ -82,11 +94,16 @@ export function useVideoPlayer(
       }
 
       const data = await response.json();
+      const sourceUnavailable =
+        response.status === 404 ||
+        (response.status === 400 && typeof data?.error === 'string' && data.error.toLowerCase().includes('source')) ||
+        (typeof data?.error === 'string' && data.error.includes('视频源不可用'));
 
       if (!response.ok) {
-        if (response.status === 404) {
+        if (sourceUnavailable) {
           setVideoError(data.error || '该视频源不可用。请返回并尝试其他来源。');
           setLoading(false);
+          onSourceUnavailableRef.current?.();
           return;
         }
         throw new Error(data.error || `HTTP ${response.status}: ${response.statusText}`);
@@ -121,6 +138,33 @@ export function useVideoPlayer(
     }
   }, [videoId, source]);
 
+  // EFFECT: Retry logic when settings change (e.g., sources loaded from subscriptions)
+  useEffect(() => {
+    if (!videoId || !source || !videoError) return;
+
+    const unsubscribe = settingsStore.subscribe(() => {
+      // If we are currently in an error state (likely "Invalid source configuration"),
+      // and settings updated (likely new sources arrived), try fetching again.
+      // We can be smarter: check if the source ID now exists in the store.
+      const settings = settingsStore.getSettings();
+      const allSources = [
+        ...settings.sources,
+        ...settings.premiumSources,
+        ...settings.subscriptions, // note: subscription items aren't usually video sources directly but let's check broadly
+      ];
+
+      // We really need to check if the specific source ID is now available
+      // But since 'subscriptions' in store expands into 'sources'/'premiumSources',
+      // we just check if any sources exist now.
+      if (allSources.length > 0) {
+        console.log("Settings updated, retrying video fetch...");
+        fetchVideoDetails();
+      }
+    });
+
+    return () => unsubscribe();
+  }, [videoId, source, videoError, fetchVideoDetails]);
+
   // Sync state from params if they change externally (e.g. back/forward navigation)
   useEffect(() => {
     if (videoData?.episodes && episodeParam !== null) {
@@ -136,6 +180,10 @@ export function useVideoPlayer(
 
   useEffect(() => {
     if (videoId && source) {
+      // Reset state when source changes to ensure clean fetch
+      setVideoData(null);
+      setCurrentEpisode(0);
+      setPlayUrl('');
       fetchVideoDetails();
     }
   }, [videoId, source, fetchVideoDetails]);
