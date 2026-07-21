@@ -178,7 +178,10 @@ async function readManagedAccounts(): Promise<StoredAccountRecord[]> {
 async function saveManagedAccounts(accounts: StoredAccountRecord[]): Promise<void> {
   const redis = getRedisClient();
   if (!redis) {
-    throw new Error('Managed auth storage unavailable');
+    throw new ManagedAuthStorageError(
+      'write',
+      new Error('Managed auth storage unavailable')
+    );
   }
 
   try {
@@ -375,18 +378,6 @@ async function authenticateManagedLogin(username: string, password: string): Pro
     password,
     getEffectiveAdminPassword()
   );
-  if (usesBootstrapAdminCredential) {
-    return {
-      accountId: 'managed-admin-env',
-      profileId: 'managed-admin-env',
-      username: 'admin',
-      name: '超级管理员',
-      role: 'super_admin',
-      customPermissions: [],
-      mode: 'managed',
-      iat: Date.now(),
-    };
-  }
 
   const accounts = await ensureManagedAccountsBootstrapped();
   let account = accounts.find((item) => item.username === normalizedUsername);
