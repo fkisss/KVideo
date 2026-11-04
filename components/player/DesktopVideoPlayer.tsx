@@ -440,6 +440,8 @@ export function DesktopVideoPlayer({
               }, 800); // Increased timeout for better stability
             }}
             onCopyLink={logic.handleCopyLink}
+            onDownloadVideo={logic.handleDownloadVideo}
+            downloadFilename={videoTitle ? `${videoTitle} 第${currentEpisodeIndex + 1}集` : undefined}
             seekStepSeconds={seekStepSeconds}
             // Speed Menu Props
             playbackRate={data.playbackRate}
