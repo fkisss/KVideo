@@ -38,6 +38,8 @@ export function useUtilities({
     }, [src, showToastNotification]);
 
     const DOWNLOAD_SERVICE_URL = 'http://192.168.3.13:6600';
+    // M3U8 下载器的 API token（= md5('密码').slice(0,8)，与下载器网页登录一致）
+    const DOWNLOAD_SERVICE_TOKEN = '07e1cd7d';
 
     const handleDownloadVideo = useCallback(async (url?: string, filename?: string) => {
         const videoUrl = url || src;
@@ -48,7 +50,10 @@ export function useUtilities({
         try {
             const resp = await fetch(`${DOWNLOAD_SERVICE_URL}/api/download`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    authorization: DOWNLOAD_SERVICE_TOKEN
+                },
                 body: JSON.stringify({
                     list: [{ url: videoUrl, ...(filename ? { filename } : {}) }]
                 })
