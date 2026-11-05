@@ -17,6 +17,9 @@ import { useDoubleTap } from '@/lib/hooks/mobile/useDoubleTap';
 import { settingsStore, DEFAULT_SEEK_STEP_SECONDS } from '@/lib/store/settings-store';
 import { premiumModeSettingsStore } from '@/lib/store/premium-mode-settings';
 import { shouldHidePlayerCursor } from '@/lib/player/cursor-visibility';
+// [download-extension] 自有扩展挂点：注册播放上下文 + 挂载下载弹窗
+import { setDownloadContext } from '@/lib/download/bus';
+import { DownloadHost } from '@/components/download/DownloadHost';
 import './web-fullscreen.css';
 
 type WebFullscreenSize = 'full' | 'large' | 'focused';
@@ -112,6 +115,18 @@ export function DesktopVideoPlayer({
       onResolutionDetected(videoResolution);
     }
   }, [videoResolution, onResolutionDetected]);
+
+  // [download-extension] 下载所需上下文集中在此注册，避免下游组件 props 透传
+  React.useEffect(() => {
+    setDownloadContext({
+      src,
+      title: videoTitle,
+      episodeName,
+      episodeIndex: currentEpisodeIndex,
+      totalEpisodes,
+    });
+    return () => setDownloadContext(null);
+  }, [src, videoTitle, episodeName, currentEpisodeIndex, totalEpisodes]);
 
   // Danmaku
   const { danmakuEnabled, comments: danmakuComments } = useDanmaku({
@@ -464,6 +479,8 @@ export function DesktopVideoPlayer({
           </div>
         </div>
       </div>
+      {/* [download-extension] 弹窗通过 Portal 渲染，位置不影响播放器布局 */}
+      <DownloadHost />
     </div>
   );
 }

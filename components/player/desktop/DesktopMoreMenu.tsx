@@ -4,6 +4,8 @@ import React from 'react';
 import { Icons } from '@/components/ui/Icon';
 import { usePlayerSettings } from '../hooks/usePlayerSettings';
 import { settingsStore, AdFilterMode } from '@/lib/store/settings-store';
+// [download-extension] 自有扩展挂点：点击后打开独立下载弹窗
+import { openDownloadDialog } from '@/lib/download/bus';
 
 import { createPortal } from 'react-dom';
 
@@ -330,6 +332,18 @@ export function DesktopMoreMenu({
                     <span>复制链接</span>
                 </button>
             )}
+
+            {/* [download-extension] 下载视频 */}
+            <button
+                onClick={() => {
+                    onToggleMoreMenu();
+                    openDownloadDialog();
+                }}
+                className={`w-full ${isRotated ? 'px-2 py-1.5 text-[11px]' : 'px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm'} text-left text-[var(--text-color)] hover:bg-[color-mix(in_srgb,var(--accent-color)_15%,transparent)] rounded-[var(--radius-2xl)] transition-colors flex items-center gap-2 mt-0.5 cursor-pointer`}
+            >
+                <Icons.Download size={isRotated ? 14 : 16} className="sm:w-[18px] sm:h-[18px]" />
+                <span>下载视频</span>
+            </button>
 
             {/* Divider */}
             <div className="h-px bg-[var(--glass-border)] my-1.5 sm:my-2" />
