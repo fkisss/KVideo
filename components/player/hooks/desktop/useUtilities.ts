@@ -37,38 +37,10 @@ export function useUtilities({
         }
     }, [src, showToastNotification]);
 
-    // 提交下载经同源服务端代理 /api/m3u8dl 转发到下载器（绕开 CORS 限制，token 在服务端）
-    const handleDownloadVideo = useCallback(async (url?: string, filename?: string) => {
-        const videoUrl = url || src;
-        if (!videoUrl) {
-            showToastNotification('没有可下载的视频链接');
-            return;
-        }
-        try {
-            const resp = await fetch('/api/m3u8dl', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    list: [{ url: videoUrl, ...(filename ? { filename } : {}) }]
-                })
-            });
-            const data = await resp.json();
-            if (data && data.code === 0) {
-                showToastNotification('已提交到下载器，可打开下载器查看进度');
-            } else {
-                showToastNotification((data && data.message) || '提交下载失败');
-            }
-        } catch (error) {
-            console.error('Download submit failed:', error);
-            showToastNotification('提交下载失败，请检查下载器服务');
-        }
-    }, [src, showToastNotification]);
-
     const utilityActions = useMemo(() => ({
         showToastNotification,
-        handleCopyLink,
-        handleDownloadVideo
-    }), [showToastNotification, handleCopyLink, handleDownloadVideo]);
+        handleCopyLink
+    }), [showToastNotification, handleCopyLink]);
 
     return utilityActions;
 }

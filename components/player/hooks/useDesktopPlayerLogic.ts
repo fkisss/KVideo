@@ -187,10 +187,6 @@ export function useDesktopPlayerLogic({
             const urlToCopy = getCopyUrl(src, type);
             utilities.handleCopyLink(urlToCopy);
         },
-        handleDownloadVideo: (type: 'original' | 'proxy' = 'original', filename?: string) => {
-            const urlToDownload = getCopyUrl(src, type);
-            utilities.handleDownloadVideo(urlToDownload, filename);
-        },
         startSpeedMenuTimeout: controlsVisibility.startSpeedMenuTimeout,
         clearSpeedMenuTimeout: controlsVisibility.clearSpeedMenuTimeout,
         formatTime: playbackControls.formatTime
